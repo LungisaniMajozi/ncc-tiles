@@ -7,6 +7,7 @@ import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import AdminLogin from "./pages/Auth/Login";
 import AdminDashboard from "./pages/Admin/Dashboard";
+import ProductManager from "./pages/Admin/ProductManager";
 import Orders from "./pages/Admin/Orders";
 import Checkout from "./pages/Checkout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -28,6 +29,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <ProtectedRoute>
+                <ProductManager />
               </ProtectedRoute>
             }
           />

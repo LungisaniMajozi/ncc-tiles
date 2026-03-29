@@ -158,7 +158,7 @@ const Checkout = () => {
   ].sort();
 
   // 📞 Company Info (from PDF document)
-  const adminWhatsApp = "27670458628";
+  const adminWhatsApp = "27603295535";
   const companyPhone1 = "067 045 8628";
   const companyPhone2 = "063 993 9627";
   const companyPhone3 = "063 448 1130";

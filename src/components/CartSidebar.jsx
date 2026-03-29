@@ -20,6 +20,17 @@ const CartSidebar = () => {
     navigate("/checkout");
   };
 
+  // Format price in Rand
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+      minimumFractionDigits: 2,
+    })
+      .format(price)
+      .replace("ZAR", "R");
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -47,7 +58,7 @@ const CartSidebar = () => {
                 <ShoppingCart className="text-primary" size={24} />
                 <h2 className="text-xl font-bold text-secondary">Your Cart</h2>
                 <span className="bg-primary text-white text-sm px-2 py-1 rounded-full">
-                  {cart.length} items
+                  {cart.length} {cart.length === 1 ? "item" : "items"}
                 </span>
               </div>
               <button
@@ -81,9 +92,22 @@ const CartSidebar = () => {
                       animate={{ opacity: 1, y: 0 }}
                       className="flex gap-4 p-4 bg-gray-50 rounded-xl"
                     >
-                      {/* Product Image Placeholder */}
-                      <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Package size={32} className="text-gray-400" />
+                      {/* Product Image */}
+                      <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              e.target.parentElement.innerHTML =
+                                '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>';
+                            }}
+                          />
+                        ) : (
+                          <Package size={32} className="text-gray-400" />
+                        )}
                       </div>
 
                       {/* Product Details */}
@@ -91,7 +115,7 @@ const CartSidebar = () => {
                         <h3 className="font-semibold text-secondary text-sm mb-1">
                           {item.name}
                         </h3>
-                        <p className="text-xs text-gray-500 mb-2">
+                        <p className="text-xs text-gray-500 mb-2 font-mono">
                           {item.code}
                         </p>
 
@@ -135,7 +159,7 @@ const CartSidebar = () => {
                           {/* Price & Remove */}
                           <div className="flex items-center space-x-3">
                             <span className="font-bold text-primary">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              {formatPrice(item.price * item.quantity)}
                             </span>
                             <button
                               onClick={() => removeFromCart(item.key)}
@@ -158,7 +182,7 @@ const CartSidebar = () => {
                 {/* Subtotal */}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">${total.toFixed(2)}</span>
+                  <span className="font-medium">{formatPrice(total)}</span>
                 </div>
 
                 {/* Delivery */}
@@ -172,7 +196,7 @@ const CartSidebar = () => {
                 {/* Total */}
                 <div className="flex justify-between text-lg font-bold">
                   <span className="text-secondary">Total</span>
-                  <span className="text-primary">${total.toFixed(2)}</span>
+                  <span className="text-primary">{formatPrice(total)}</span>
                 </div>
 
                 {/* Checkout Button */}

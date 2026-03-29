@@ -9,7 +9,7 @@ export const useProducts = () => {
   return context;
 };
 
-// 🇿🇦 NCC Tiles - Official Product Catalog (12 products from PDF)
+// 🇿🇦 NCC Tiles - Official 12 Products from PDF
 // Prices in South African Rand (R) per m²
 const defaultProducts = [
   // 600x600 Glossy
@@ -20,9 +20,9 @@ const defaultProducts = [
     category: "600x600 Glossy",
     sizes: ["600x600"],
     colors: ["White", "Beige", "Grey", "Black"],
-    price: 459.99,
+    price: 45.99,
     inStock: true,
-    image: null,
+    image: "/tiles/msg66002m.jpg",
     description: "Premium glossy porcelain tile for elegant interiors",
   },
   {
@@ -32,9 +32,9 @@ const defaultProducts = [
     category: "600x600 Glossy",
     sizes: ["600x600"],
     colors: ["Cream", "Ivory", "Brown"],
-    price: 479.99,
+    price: 47.99,
     inStock: true,
-    image: null,
+    image: "/tiles/msg66003m.jpg",
     description: "High-quality glossy finish with rich color options",
   },
   {
@@ -44,9 +44,9 @@ const defaultProducts = [
     category: "600x600 Glossy",
     sizes: ["600x600"],
     colors: ["Pearl", "Sand", "Charcoal"],
-    price: 469.99,
+    price: 46.99,
     inStock: true,
-    image: null,
+    image: "/tiles/msg66004m.jpg",
     description: "Versatile glossy tile for modern spaces",
   },
   {
@@ -56,9 +56,9 @@ const defaultProducts = [
     category: "600x600 Glossy",
     sizes: ["600x600"],
     colors: ["Marble White", "Marble Grey"],
-    price: 499.99,
+    price: 49.99,
     inStock: true,
-    image: null,
+    image: "/tiles/msg66005s.jpg",
     description: "Luxury marble-effect glossy porcelain",
   },
 
@@ -70,9 +70,9 @@ const defaultProducts = [
     category: "600x600 Polished",
     sizes: ["600x600"],
     colors: ["Marble White", "Marble Grey", "Marble Black"],
-    price: 529.99,
+    price: 52.99,
     inStock: true,
-    image: null,
+    image: "/tiles/nrp660016.jpg",
     description: "Elegant polished finish with marble aesthetics",
   },
   {
@@ -82,9 +82,9 @@ const defaultProducts = [
     category: "600x600 Polished",
     sizes: ["600x600"],
     colors: ["Ivory Polish", "Grey Polish"],
-    price: 549.99,
+    price: 54.99,
     inStock: false,
-    image: null,
+    image: "/tiles/nrp660024.jpg",
     description: "Premium polished porcelain for luxury applications",
   },
 
@@ -96,10 +96,10 @@ const defaultProducts = [
     category: "600x600 Matt",
     sizes: ["600x600"],
     colors: ["Matte White", "Matte Grey", "Matte Beige"],
-    price: 429.99,
+    price: 42.99,
     inStock: true,
     slipResistant: true,
-    image: null,
+    image: "/tiles/msm66031m.jpg",
     description: "Slip-resistant matt finish for bathrooms & kitchens",
   },
   {
@@ -109,10 +109,10 @@ const defaultProducts = [
     category: "600x600 Matt",
     sizes: ["600x600"],
     colors: ["Stone Grey", "Earth Brown"],
-    price: 439.99,
+    price: 43.99,
     inStock: true,
     slipResistant: true,
-    image: null,
+    image: "/tiles/msm66032m.jpg",
     description: "Natural stone look with safety grip surface",
   },
 
@@ -124,9 +124,9 @@ const defaultProducts = [
     category: "60x120 Glazed",
     sizes: ["60x120"],
     colors: ["White", "Grey", "Beige", "Anthracite"],
-    price: 659.99,
+    price: 65.99,
     inStock: true,
-    image: null,
+    image: "/tiles/nrp61011.jpg",
     description: "Modern large format glazed tile for spacious areas",
   },
   {
@@ -136,9 +136,9 @@ const defaultProducts = [
     category: "60x120 Glazed",
     sizes: ["60x120"],
     colors: ["Marble Effect", "Concrete Grey"],
-    price: 689.99,
+    price: 68.99,
     inStock: true,
-    image: null,
+    image: "/tiles/nrp61012.jpg",
     description: "Contemporary large tile with designer finishes",
   },
 
@@ -150,9 +150,9 @@ const defaultProducts = [
     category: "60x120 Polished",
     sizes: ["60x120"],
     colors: ["Marble White", "Marble Grey"],
-    price: 729.99,
+    price: 72.99,
     inStock: false,
-    image: null,
+    image: "/tiles/nrp61003.jpg",
     description: "Luxury polished large format for premium projects",
   },
   {
@@ -162,28 +162,25 @@ const defaultProducts = [
     category: "60x120 Polished",
     sizes: ["60x120"],
     colors: ["Ivory Polish", "Pearl Grey"],
-    price: 749.99,
+    price: 74.99,
     inStock: true,
-    image: null,
+    image: "/tiles/nrp61004.jpg",
     description: "High-end polished tile for statement installations",
   },
 ];
 
-// 🔄 Data versioning to ensure consistency across environments
-const DATA_VERSION = "v1.0-ncc-official";
+const DATA_VERSION = "v1.0-ncc-12products";
 
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Load products from localStorage or use defaults
   useEffect(() => {
     const loadProducts = () => {
       try {
         const stored = localStorage.getItem("ncc_products");
         const storedVersion = localStorage.getItem("ncc_data_version");
 
-        // If version mismatch or no data, use defaults
         if (storedVersion !== DATA_VERSION || !stored) {
           localStorage.setItem("ncc_products", JSON.stringify(defaultProducts));
           localStorage.setItem("ncc_data_version", DATA_VERSION);
@@ -197,11 +194,9 @@ export const ProductProvider = ({ children }) => {
       }
       setLoading(false);
     };
-
     loadProducts();
   }, []);
 
-  // Save to localStorage whenever products change
   useEffect(() => {
     if (!loading) {
       try {
@@ -212,7 +207,6 @@ export const ProductProvider = ({ children }) => {
     }
   }, [products, loading]);
 
-  // 🔧 Admin: Add new product
   const addProduct = (product) => {
     const newProduct = {
       ...product,
@@ -224,7 +218,6 @@ export const ProductProvider = ({ children }) => {
     return newProduct;
   };
 
-  // 🔧 Admin: Update product
   const updateProduct = (productId, updates) => {
     setProducts((prev) =>
       prev.map((p) =>
@@ -235,36 +228,28 @@ export const ProductProvider = ({ children }) => {
     );
   };
 
-  // 🔧 Admin: Delete product
   const deleteProduct = (productId) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
+    if (window.confirm("Delete this product?")) {
       setProducts((prev) => prev.filter((p) => p.id !== productId));
       return true;
     }
     return false;
   };
 
-  // 🔧 Admin: Toggle stock status
   const toggleStock = (productId) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === productId ? { ...p, inStock: !p.inStock } : p)),
     );
   };
 
-  // 🔧 Admin: Update product image
   const updateProductImage = (productId, imageData) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === productId ? { ...p, image: imageData } : p)),
     );
   };
 
-  // 🔧 Admin: Reset to default 12 products
   const resetToDefaults = () => {
-    if (
-      window.confirm(
-        "⚠️ This will delete all custom products and restore the official 12 NCC products. Continue?",
-      )
-    ) {
+    if (window.confirm("⚠️ Reset to official 12 NCC products?")) {
       localStorage.setItem("ncc_products", JSON.stringify(defaultProducts));
       localStorage.setItem("ncc_data_version", DATA_VERSION);
       setProducts(defaultProducts);
@@ -273,17 +258,12 @@ export const ProductProvider = ({ children }) => {
     return false;
   };
 
-  // 🔍 Filter helpers
   const getByCategory = (category) =>
     products.filter((p) => p.category === category);
-
   const getInStock = () => products.filter((p) => p.inStock);
-
   const getById = (id) => products.find((p) => p.id === Number(id));
-
   const categories = [...new Set(products.map((p) => p.category))].sort();
 
-  // 🔍 Search functionality
   const searchProducts = (query) => {
     const q = query.toLowerCase();
     return products.filter(
@@ -293,11 +273,6 @@ export const ProductProvider = ({ children }) => {
         p.category?.toLowerCase().includes(q),
     );
   };
-
-  // 📊 Stats
-  const totalProducts = products.length;
-  const inStockCount = products.filter((p) => p.inStock).length;
-  const outOfStockCount = products.filter((p) => !p.inStock).length;
 
   return (
     <ProductContext.Provider
@@ -315,10 +290,9 @@ export const ProductProvider = ({ children }) => {
         getInStock,
         getById,
         searchProducts,
-        totalProducts,
-        inStockCount,
-        outOfStockCount,
-        defaultCount: defaultProducts.length,
+        totalProducts: products.length,
+        inStockCount: products.filter((p) => p.inStock).length,
+        outOfStockCount: products.filter((p) => !p.inStock).length,
       }}
     >
       {children}

@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useProducts } from "../context/ProductContext";
 import { useCart } from "../context/CartContext";
-import { ArrowLeft, Package, Check } from "lucide-react";
+import { ArrowLeft, Package, Check, TrendingUp } from "lucide-react";
 import { useState } from "react";
 
 const ProductDetails = () => {
@@ -15,6 +15,16 @@ const ProductDetails = () => {
     product?.colors?.[0] || "",
   );
   const [quantity, setQuantity] = useState(1);
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+      minimumFractionDigits: 2,
+    })
+      .format(price)
+      .replace("ZAR", "R");
+  };
 
   if (!product) {
     return (
@@ -52,7 +62,7 @@ const ProductDetails = () => {
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="grid md:grid-cols-2 gap-8 p-6 md:p-8">
             {/* Image */}
-            <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center h-80">
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center h-80 overflow-hidden">
               {product.image ? (
                 <img
                   src={product.image}
@@ -66,7 +76,9 @@ const ProductDetails = () => {
 
             {/* Details */}
             <div>
-              <span className="text-sm text-gray-500">{product.code}</span>
+              <span className="text-sm text-gray-500 font-mono">
+                {product.code}
+              </span>
               <h1 className="text-2xl md:text-3xl font-bold text-secondary mt-1">
                 {product.name}
               </h1>
@@ -76,12 +88,12 @@ const ProductDetails = () => {
 
               <div className="mt-6">
                 <span className="text-3xl font-bold text-primary">
-                  R{product.price}
+                  {formatPrice(product.price)}
                 </span>
                 <span className="text-gray-500 ml-1">/ m²</span>
               </div>
 
-              {/* Size Selection */}
+              {/* Size */}
               {product.sizes?.length > 0 && (
                 <div className="mt-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -105,7 +117,7 @@ const ProductDetails = () => {
                 </div>
               )}
 
-              {/* Color Selection */}
+              {/* Color */}
               {product.colors?.length > 0 && (
                 <div className="mt-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -137,7 +149,7 @@ const ProductDetails = () => {
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="w-10 h-10 border rounded-lg hover:bg-gray-50"
+                    className="w-10 h-10 border rounded hover:bg-gray-50"
                   >
                     -
                   </button>
@@ -146,7 +158,7 @@ const ProductDetails = () => {
                   </span>
                   <button
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="w-10 h-10 border rounded-lg hover:bg-gray-50"
+                    className="w-10 h-10 border rounded hover:bg-gray-50"
                   >
                     +
                   </button>
@@ -167,7 +179,7 @@ const ProductDetails = () => {
                   <>
                     <Check size={20} />
                     <span>
-                      Add to Cart - R{(product.price * quantity).toFixed(2)}
+                      Add to Cart - {formatPrice(product.price * quantity)}
                     </span>
                   </>
                 ) : (

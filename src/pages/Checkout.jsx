@@ -10,7 +10,6 @@ import {
   User,
   CreditCard,
   DollarSign,
-  Package,
   Download,
   MessageCircle,
   AlertCircle,
@@ -25,7 +24,7 @@ const Checkout = () => {
   const { addOrder } = useOrders();
   const [step, setStep] = useState(1);
   const [orderComplete, setOrderComplete] = useState(false);
-  const [orderData, setOrderData] = useState(null);
+  const [orderCartItems, setOrderCartItems] = useState([]);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -157,255 +156,249 @@ const Checkout = () => {
     "Zwartkop",
   ].sort();
 
-  // 📞 Company Info (from PDF document)
-  const adminWhatsApp = "27603295535";
+  // 📞 Company Info (from PDF documents)
+  const adminWhatsApp = "27670458628";
   const companyPhone1 = "067 045 8628";
   const companyPhone2 = "063 993 9627";
   const companyPhone3 = "063 448 1130";
   const companyAddress = "9692 de Luba Crescent, Clayville Ext 79";
   const companyEmail = "info@ncctiles.co.za";
 
-  // Generate PDF Receipt with Product Images - FIXED VERSION
-  const generatePDF = (orderData, cartItems) => {
+  // Generate PDF Receipt
+  const generatePDF = (
+    orderNumber,
+    orderDate,
+    paymentMethod,
+    customerName,
+    phone,
+    email,
+    address,
+    city,
+    postalCode,
+    subtotal,
+    cartItems,
+  ) => {
     const doc = new jsPDF();
 
-    // Header - NCC Blue background
+    // ========== HEADER (Blue Background) ==========
     doc.setFillColor(30, 64, 175);
-    doc.rect(0, 0, 210, 40, "F");
+    doc.rect(0, 0, 210, 35, "F");
+
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
+    doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("NCC TILES SUPPLIER", 105, 18, { align: "center" });
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text("Naeve Construction Company", 105, 26, { align: "center" });
-
-    // Company Info (from PDF)
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(9);
-    doc.text(companyAddress, 105, 34, { align: "center" });
-    doc.text(
-      `Tel: ${companyPhone1} | ${companyPhone2} | ${companyPhone3}`,
-      105,
-      39,
-      { align: "center" },
-    );
-
-    // Order Title
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 64, 175);
-    doc.text("ORDER RECEIPT", 14, 55);
+    doc.text("NCC TILES SUPPLIER", 105, 15, { align: "center" });
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Order Reference: ${orderData.orderNumber}`, 14, 63);
-    doc.text(`Date: ${orderData.date}`, 14, 69);
+    doc.text("Naeve Construction Company", 105, 22, { align: "center" });
 
-    const paymentText =
-      orderData.paymentMethod === "cod"
-        ? "Payment Method: Cash on Delivery"
-        : "Payment Method: EFT (Pay Before Delivery)";
-    doc.text(paymentText, 14, 75);
-
-    // Customer Details Box
-    doc.setDrawColor(200, 200, 200);
-    doc.setFillColor(249, 250, 251);
-    doc.rect(14, 80, 182, 35, "FD");
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("CUSTOMER DETAILS", 18, 88);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Name: ${orderData.customerName}`, 18, 96);
-    doc.text(`Phone: ${orderData.phone}`, 18, 102);
-    doc.text(`Email: ${orderData.email}`, 18, 108);
-    doc.text(`Address: ${orderData.address}`, 18, 114);
-    doc.text(`Town: ${orderData.city}, ${orderData.postalCode}`, 18, 120);
-
-    // Order Items Section
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("ORDER ITEMS", 14, 135);
-
-    // Start position for items
-    let yPos = 145;
-
-    // Process each cart item
-    for (const item of cartItems) {
-      // Safety check - skip if item is invalid
-      if (!item || !item.name) continue;
-
-      // Product image (with better error handling)
-      if (item.image) {
-        try {
-          // Add image with error handling
-          doc.addImage(item.image, "JPEG", 14, yPos - 3, 18, 18);
-        } catch (e) {
-          // Fallback: draw placeholder box
-          doc.setFillColor(240, 240, 240);
-          doc.rect(14, yPos - 3, 18, 18, "F");
-          doc.setFontSize(8);
-          doc.setTextColor(150, 150, 150);
-          doc.text("IMG", 23, yPos + 7, { align: "center" });
-          doc.setTextColor(0, 0, 0);
-        }
-      } else {
-        // No image: draw placeholder
-        doc.setFillColor(240, 240, 240);
-        doc.rect(14, yPos - 3, 18, 18, "F");
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text("No Image", 23, yPos + 7, { align: "center" });
-        doc.setTextColor(0, 0, 0);
-      }
-
-      // Product details (with safe property access)
-      const productName = item.name || "Unknown Product";
-      const productCode = item.code || "N/A";
-      const productSize = item.size || item.sizes?.[0] || "600x600";
-      const productColor = item.color || item.colors?.[0] || "N/A";
-      const productQty = item.quantity || 1;
-      const productPrice = item.price || 0;
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text(`${productName}`, 40, yPos);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.text(`Code: ${productCode}`, 40, yPos + 4);
-      doc.text(`Size: ${productSize} | Color: ${productColor}`, 40, yPos + 8);
-      doc.text(`Qty: ${productQty} m²`, 40, yPos + 12);
-
-      // Price (right aligned)
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text(`${formatPrice(productPrice)}/m²`, 145, yPos);
-      doc.setTextColor(30, 64, 175);
-      doc.text(`${formatPrice(productPrice * productQty)}`, 185, yPos, {
-        align: "right",
-      });
-      doc.setTextColor(0, 0, 0);
-
-      // Move to next item position
-      yPos += 28;
-
-      // Add new page if needed
-      if (yPos > 260) {
-        doc.addPage();
-        yPos = 20;
-        // Re-add header on new page
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text("ORDER ITEMS (continued)", 14, yPos);
-        yPos += 10;
-      }
-    }
-
-    // Totals Section
-    if (yPos > 240) {
-      doc.addPage();
-      yPos = 30;
-    }
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Subtotal: ${formatPrice(orderData.subtotal)}`, 140, yPos);
-    doc.text(`Delivery: To be calculated (Manual)`, 140, yPos + 6);
-
-    doc.setFontSize(13);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 64, 175);
+    doc.setFontSize(8);
+    doc.text(companyAddress, 105, 28, { align: "center" });
     doc.text(
-      `Total: ${formatPrice(orderData.subtotal)} (+ delivery)`,
-      140,
-      yPos + 14,
+      `Tel: ${companyPhone1} | ${companyPhone2} | ${companyPhone3}`,
+      105,
+      33,
+      { align: "center" },
     );
 
-    // Footer
+    // ========== ORDER CONFIRMATION TITLE ==========
+    doc.setTextColor(30, 64, 175);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("ORDER CONFIRMATION", 14, 48);
+
+    // ========== ORDER DETAILS ==========
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Order Reference: ${orderNumber}`, 14, 56);
+    doc.text(`Date: ${orderDate}`, 14, 61);
+
+    const paymentText =
+      paymentMethod === "cod"
+        ? "Payment Method: Cash on Delivery"
+        : "Payment Method: EFT (Pay Before Delivery)";
+    doc.text(paymentText, 14, 66);
+
+    // ========== CUSTOMER DETAILS BOX ==========
+    doc.setDrawColor(200, 200, 200);
+    doc.setFillColor(249, 250, 251);
+    doc.rect(14, 72, 182, 40, "FD");
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("CUSTOMER DETAILS", 18, 80);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(`Name: ${customerName}`, 18, 87);
+    doc.text(`Phone: ${phone}`, 18, 92);
+    doc.text(`Email: ${email}`, 18, 97);
+    doc.text(`Address: ${address}`, 18, 102);
+    doc.text(`Town: ${city}, ${postalCode}`, 18, 107);
+
+    // ========== ORDER ITEMS TABLE ==========
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("ORDER ITEMS", 14, 125);
+
+    // Prepare table data
+    const tableData = cartItems.map((item) => {
+      return [
+        item.code || "N/A",
+        item.name || "Unknown",
+        item.size || item.sizes?.[0] || "600x600",
+        `${item.quantity || 1} m²`,
+        formatPrice(item.price || 0),
+        formatPrice((item.price || 0) * (item.quantity || 1)),
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 130,
+      head: [["Code", "Product", "Size", "Qty", "Price/m²", "Total"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: {
+        fillColor: [30, 64, 175],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 8,
+      },
+      bodyStyles: { fontSize: 8 },
+      styles: { cellPadding: 2 },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 50 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 25 },
+      },
+    });
+
+    // ========== TOTALS SECTION ==========
+    const finalY = doc.lastAutoTable.finalY + 10;
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Subtotal: ${formatPrice(subtotal)}`, 140, finalY);
+    doc.text(`Delivery: To be calculated (Manual)`, 140, finalY + 5);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 64, 175);
+    doc.text(`Total: ${formatPrice(subtotal)} (+ delivery)`, 140, finalY + 12);
+
+    // ========== PAYMENT INSTRUCTIONS ==========
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("PAYMENT INSTRUCTIONS:", 14, finalY + 25);
+
+    doc.setFont("helvetica", "normal");
+    if (paymentMethod === "cod") {
+      doc.text(
+        "• Cash on Delivery - Pay when you receive your order",
+        14,
+        finalY + 30,
+      );
+      doc.text("• We accept cash or EFT on delivery", 14, finalY + 34);
+    } else {
+      doc.text("• EFT Payment Required Before Delivery", 14, finalY + 30);
+      doc.text(
+        "• Banking details will be provided via WhatsApp",
+        14,
+        finalY + 34,
+      );
+      doc.text(
+        "• Delivery will be scheduled after payment confirmation",
+        14,
+        finalY + 38,
+      );
+    }
+
+    // ========== IMPORTANT NOTES ==========
+    doc.setFont("helvetica", "bold");
+    doc.text("IMPORTANT NOTES:", 14, finalY + 48);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      "• Delivery charges will be calculated manually based on location",
+      14,
+      finalY + 53,
+    );
+    doc.text(
+      "• Admin will contact you within 24 hours with final amount",
+      14,
+      finalY + 57,
+    );
+    doc.text(
+      `• For queries: ${companyPhone1} | ${companyEmail}`,
+      14,
+      finalY + 61,
+    );
+
+    // ========== FOOTER ==========
     doc.setFontSize(8);
     doc.setTextColor(128, 128, 128);
-    doc.setFont("helvetica", "normal");
     doc.text("Thank you for choosing NCC Tiles Supplier!", 105, 280, {
       align: "center",
     });
 
-    return doc;
+    // ✅ Convert PDF to base64 for persistent storage
+    const pdfBase64 = doc.output("datauristring");
+
+    return { doc, pdfBase64 };
   };
 
-  // Download PDF Receipt - with debug logging
-  const downloadPDF = () => {
-    if (!orderData) {
-      console.error("No order data available");
-      return;
-    }
-
-    // Get current cart items
-    const cartItems = cart || [];
+  // Download PDF Receipt
+  const downloadPDF = (
+    orderNumber,
+    orderDate,
+    paymentMethod,
+    customerName,
+    phone,
+    email,
+    address,
+    city,
+    postalCode,
+    subtotal,
+  ) => {
+    const cartItems = orderCartItems.length > 0 ? orderCartItems : cart;
 
     if (cartItems.length === 0) {
-      console.error("Cart is empty - cannot generate PDF");
-      alert("⚠️ No items in cart to generate receipt");
+      alert("⚠️ No items available to generate receipt");
       return;
     }
 
-    console.log("Generating PDF with items:", cartItems);
-
     try {
-      const pdf = generatePDF(orderData, cartItems);
-      pdf.save(`NCC-Order-${orderData.orderNumber}.pdf`);
-      console.log("PDF downloaded successfully");
+      const { doc } = generatePDF(
+        orderNumber,
+        orderDate,
+        paymentMethod,
+        customerName,
+        phone,
+        email,
+        address,
+        city,
+        postalCode,
+        subtotal,
+        cartItems,
+      );
+      doc.save(`${orderNumber}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("❌ Error generating PDF. Please try again or contact support.");
+      alert("❌ Error generating PDF. Please try again.");
     }
   };
 
-  // Send to WhatsApp - Opens in NEW TAB + Shows success page immediately
-  const sendToWhatsApp = () => {
-    if (!orderData) return;
-
-    const paymentText =
-      orderData.paymentMethod === "cod"
-        ? "💵 Cash on Delivery"
-        : "🏦 EFT (Pay Before Delivery)";
-
-    // SHORT WhatsApp message (only reference + basic info)
-    const message = `🏗️ NEW ORDER - NCC TILES
-
-📋 Ref: ${orderData.orderNumber}
-👤 Customer: ${orderData.customerName}
-📞 Phone: ${orderData.phone}
-📍 Town: ${orderData.city}
-💰 Total: ${formatPrice(orderData.subtotal)} (+ delivery)
-💳 Payment: ${paymentText}
-
-📄 Receipt available for download
-
-⚠️ Action: Calculate delivery & contact customer`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${adminWhatsApp}?text=${encodedMessage}`;
-
-    // ✅ Show alert BEFORE opening WhatsApp (prevents confusion)
-    alert(
-      "📱 WhatsApp will open in a NEW TAB.\n\n✅ After sending the message, SWITCH BACK to this tab to download your receipt.",
-    );
-
-    // ✅ Open WhatsApp in NEW TAB (doesn't navigate away from your site)
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-
-    // ✅ Save order to admin system
-    addOrder({
-      ...orderData,
-      items: cart,
-      status: "pending",
-    });
-
-    // ✅ Show success page IMMEDIATELY (no delay)
-    setOrderComplete(true);
+  // Clear cart and navigate
+  const clearOrderAndCart = () => {
     clearCart();
+    setOrderCartItems([]);
+    navigate("/");
   };
 
   const handleSubmit = (e) => {
@@ -419,17 +412,26 @@ const Checkout = () => {
         return;
       }
 
-      // Create order data
-      const newOrderData = {
-        orderNumber: `NCC-${Date.now().toString().slice(-8)}`,
-        date: new Date().toLocaleDateString("en-ZA", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        customerName: `${formData.firstName} ${formData.lastName}`,
+      // ✅ STEP 1: Generate order number ONCE
+      const orderNumber = `NCC-${Date.now().toString().slice(-8)}`;
+
+      // ✅ STEP 2: Create order date
+      const orderDate = new Date().toLocaleDateString("en-ZA", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      // ✅ STEP 3: Create customer name
+      const customerName = `${formData.firstName} ${formData.lastName}`;
+
+      // ✅ STEP 4: Create order data object (use this EVERYWHERE)
+      const orderData = {
+        orderNumber: orderNumber,
+        orderDate: orderDate,
+        customerName: customerName,
         phone: formData.phone,
         email: formData.email,
         address: formData.address,
@@ -441,8 +443,76 @@ const Checkout = () => {
         status: "pending",
       };
 
-      setOrderData(newOrderData);
-      sendToWhatsApp(); // Opens WhatsApp + shows success page
+      // ✅ STEP 5: Show alert BEFORE opening WhatsApp
+      const paymentText =
+        orderData.paymentMethod === "cod"
+          ? "💵 Cash on Delivery"
+          : "🏦 EFT (Pay Before Delivery)";
+
+      const whatsappMessage = `🏗️ NEW ORDER - NCC TILES
+
+📋 Ref: ${orderData.orderNumber}
+👤 Customer: ${orderData.customerName}
+📞 Phone: ${orderData.phone}
+📍 Town: ${orderData.city}
+💰 Total: ${formatPrice(orderData.subtotal)} (+ delivery)
+💳 Payment: ${paymentText}
+
+📄 Receipt available for download
+
+⚠️ Action: Calculate delivery & contact customer`;
+
+      alert(`📱 WhatsApp will now open.
+
+✅ IMPORTANT: After sending your message, COME BACK to this page to download your receipt.
+
+Your order reference is: ${orderData.orderNumber}`);
+
+      // ✅ STEP 6: Open WhatsApp
+      const encodedMessage = encodeURIComponent(whatsappMessage);
+      const whatsappUrl = `https://wa.me/${adminWhatsApp}?text=${encodedMessage}`;
+      window.open(whatsappUrl, "_blank");
+
+      // ✅ STEP 7: Store cart items for PDF generation
+      setOrderCartItems([...cart]);
+
+      // ✅ STEP 8: Generate PDF and save order
+      try {
+        const { pdfBase64 } = generatePDF(
+          orderData.orderNumber,
+          orderData.orderDate,
+          orderData.paymentMethod,
+          orderData.customerName,
+          orderData.phone,
+          orderData.email,
+          orderData.address,
+          orderData.city,
+          orderData.postalCode,
+          orderData.subtotal,
+          cart,
+        );
+
+        // ✅ STEP 9: Save order to admin system with PDF
+        addOrder({
+          ...orderData,
+          items: cart,
+          pdfBase64: pdfBase64,
+        });
+
+        // ✅ STEP 10: Show success page
+        setTimeout(() => {
+          setOrderComplete(true);
+          // Store orderData for success page display
+          window.orderDataForSuccessPage = orderData;
+        }, 1000);
+      } catch (error) {
+        console.error("Error saving order:", error);
+        // Still show success page even if PDF fails
+        setTimeout(() => {
+          setOrderComplete(true);
+          window.orderDataForSuccessPage = orderData;
+        }, 1000);
+      }
     }
   };
 
@@ -465,8 +535,10 @@ const Checkout = () => {
     );
   }
 
-  // Success page after WhatsApp sent
-  if (orderComplete && orderData) {
+  // Success page - ALL REFERENCES MATCH
+  if (orderComplete && window.orderDataForSuccessPage) {
+    const orderData = window.orderDataForSuccessPage;
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <motion.div
@@ -474,15 +546,16 @@ const Checkout = () => {
           animate={{ scale: 1, opacity: 1 }}
           className="bg-white p-8 rounded-2xl shadow-xl max-w-2xl w-full"
         >
-          {/* ⚠️ BIG NOTICE AT TOP */}
-          <div className="bg-amber-100 border-2 border-amber-400 rounded-xl p-4 mb-6 text-center">
-            <p className="font-bold text-amber-800 text-lg">
-              🔄 WhatsApp Opened in Another Tab
+          {/* Notice - Shows correct reference */}
+          <div className="bg-green-100 border-2 border-green-400 rounded-xl p-4 mb-6 text-center">
+            <p className="font-bold text-green-800 text-lg">
+              ✅ Order Submitted Successfully!
             </p>
-            <p className="text-amber-700 mt-1">
-              After sending your message on WhatsApp,{" "}
-              <span className="font-semibold">switch back to this tab</span> to
-              download your receipt.
+            <p className="text-green-700 mt-1">
+              Reference:{" "}
+              <span className="font-mono font-bold">
+                {orderData.orderNumber}
+              </span>
             </p>
           </div>
 
@@ -491,25 +564,31 @@ const Checkout = () => {
           </div>
 
           <h2 className="text-2xl font-bold text-secondary mb-2 text-center">
-            Order Submitted!
+            Download Your Receipt
           </h2>
           <p className="text-gray-600 mb-6 text-center">
-            Reference:{" "}
-            <span className="font-mono font-bold">{orderData.orderNumber}</span>
+            Your order has been saved to our system
           </p>
 
           {/* Steps */}
           <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl mb-6">
-            <h3 className="font-bold text-blue-800 mb-4">✅ What Happened:</h3>
+            <h3 className="font-bold text-blue-800 mb-4">
+              📋 What to do next:
+            </h3>
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
                 <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm">
                   1
                 </div>
                 <div>
-                  <p className="font-semibold text-blue-800">WhatsApp Opened</p>
+                  <p className="font-semibold text-blue-800">
+                    Download Receipt
+                  </p>
                   <p className="text-sm text-blue-700">
-                    Message sent to admin: {companyPhone1}
+                    Click button below to download PDF:{" "}
+                    <span className="font-mono">
+                      {orderData.orderNumber}.pdf
+                    </span>
                   </p>
                 </div>
               </div>
@@ -518,11 +597,9 @@ const Checkout = () => {
                   2
                 </div>
                 <div>
-                  <p className="font-semibold text-blue-800">
-                    Download Receipt
-                  </p>
+                  <p className="font-semibold text-blue-800">Contact Admin</p>
                   <p className="text-sm text-blue-700">
-                    Click button below to get your PDF receipt
+                    Admin will contact you within 24 hours
                   </p>
                 </div>
               </div>
@@ -532,18 +609,25 @@ const Checkout = () => {
           {/* Action Buttons */}
           <div className="space-y-3 mb-6">
             <button
-              onClick={downloadPDF}
+              onClick={() =>
+                downloadPDF(
+                  orderData.orderNumber,
+                  orderData.orderDate,
+                  orderData.paymentMethod,
+                  orderData.customerName,
+                  orderData.phone,
+                  orderData.email,
+                  orderData.address,
+                  orderData.city,
+                  orderData.postalCode,
+                  orderData.subtotal,
+                )
+              }
               className="block w-full bg-primary text-white py-4 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2 font-semibold shadow-lg"
             >
               <Download size={20} />
-              <span>Download Receipt (PDF)</span>
+              <span>Download Receipt ({orderData.orderNumber}.pdf)</span>
             </button>
-
-            {/* Helper text */}
-            <p className="text-center text-xs text-gray-500">
-              💡 Still on WhatsApp? Click your browser's back button or switch
-              tabs to return here.
-            </p>
 
             <a
               href={`https://wa.me/${adminWhatsApp}`}
@@ -552,7 +636,7 @@ const Checkout = () => {
               className="block w-full bg-green-600 text-white py-4 rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2 font-semibold"
             >
               <MessageCircle size={20} />
-              <span>Open WhatsApp Again</span>
+              <span>Contact Admin on WhatsApp</span>
             </a>
 
             <a
@@ -564,7 +648,7 @@ const Checkout = () => {
             </a>
           </div>
 
-          {/* Order Summary */}
+          {/* Order Summary - All references match */}
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
             <p className="text-sm text-gray-600 mb-1">Order Reference</p>
             <p className="text-xl font-mono font-bold text-primary">
@@ -579,7 +663,7 @@ const Checkout = () => {
             </p>
           </div>
 
-          {/* Company Contact Info */}
+          {/* Company Contact */}
           <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm">
             <p className="font-semibold text-secondary mb-2">📞 Need Help?</p>
             <p className="text-gray-600">{companyAddress}</p>
@@ -590,7 +674,7 @@ const Checkout = () => {
           </div>
 
           <button
-            onClick={() => navigate("/")}
+            onClick={clearOrderAndCart}
             className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
           >
             Continue Shopping

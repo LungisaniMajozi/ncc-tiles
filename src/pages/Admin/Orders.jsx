@@ -11,6 +11,7 @@ import {
   Package,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import jsPDF from "jspdf";
 
 const Orders = () => {
   const { orders, deleteOrder, updateOrderStatus } = useOrders();
@@ -27,12 +28,24 @@ const Orders = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // ✅ Download PDF from stored base64
   const downloadPDF = (order) => {
-    if (order.pdfData) {
+    if (!order.pdfBase64) {
+      alert("⚠️ PDF not available for this order");
+      return;
+    }
+
+    try {
+      // Create link to download PDF from base64
       const link = document.createElement("a");
-      link.href = order.pdfData;
+      link.href = order.pdfBase64;
       link.download = `${order.orderNumber}.pdf`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("❌ Error downloading PDF");
     }
   };
 
@@ -183,7 +196,10 @@ const Orders = () => {
                         {order.city}
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-primary">
-                        R{order.subtotal?.toFixed(2)}
+                        {new Intl.NumberFormat("en-ZA", {
+                          style: "currency",
+                          currency: "ZAR",
+                        }).format(order.subtotal || 0)}
                       </td>
                       <td className="px-6 py-4">
                         <select
@@ -206,7 +222,7 @@ const Orders = () => {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => downloadPDF(order)}
-                            disabled={!order.pdfData}
+                            disabled={!order.pdfBase64}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"
                             title="Download PDF"
                           >

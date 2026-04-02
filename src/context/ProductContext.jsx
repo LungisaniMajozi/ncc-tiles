@@ -9,18 +9,18 @@ export const useProducts = () => {
   return context;
 };
 
-// 🇿🇦 NCC Tiles - Official 12 Products from PDF
-// Prices in South African Rand (R) per m²
+// 🇿🇦 NCC - Complete Product Catalog (Floor Tiles + Roofing Sheets)
 const defaultProducts = [
-  // 600x600 Glossy
+  // ========== FLOOR TILES - 600x600 GLOSSY ==========
   {
     id: 1,
     code: "MSG66002M",
     name: "Glossy Porcelain Tile",
     category: "600x600 Glossy",
+    type: "floor-tile",
     sizes: ["600x600"],
     colors: ["White", "Beige", "Grey", "Black"],
-    price: 45.99,
+    price: 459.99,
     inStock: true,
     image: "/tiles/msg66002m.jpg",
     description: "Premium glossy porcelain tile for elegant interiors",
@@ -30,9 +30,10 @@ const defaultProducts = [
     code: "MSG66003M",
     name: "Glossy Porcelain Tile",
     category: "600x600 Glossy",
+    type: "floor-tile",
     sizes: ["600x600"],
     colors: ["Cream", "Ivory", "Brown"],
-    price: 47.99,
+    price: 479.99,
     inStock: true,
     image: "/tiles/msg66003m.jpg",
     description: "High-quality glossy finish with rich color options",
@@ -42,9 +43,10 @@ const defaultProducts = [
     code: "MSG66004M",
     name: "Glossy Porcelain Tile",
     category: "600x600 Glossy",
+    type: "floor-tile",
     sizes: ["600x600"],
     colors: ["Pearl", "Sand", "Charcoal"],
-    price: 46.99,
+    price: 469.99,
     inStock: true,
     image: "/tiles/msg66004m.jpg",
     description: "Versatile glossy tile for modern spaces",
@@ -54,23 +56,25 @@ const defaultProducts = [
     code: "MSG66005S",
     name: "Glossy Porcelain Tile",
     category: "600x600 Glossy",
+    type: "floor-tile",
     sizes: ["600x600"],
     colors: ["Marble White", "Marble Grey"],
-    price: 49.99,
+    price: 499.99,
     inStock: true,
     image: "/tiles/msg66005s.jpg",
     description: "Luxury marble-effect glossy porcelain",
   },
 
-  // 600x600 Polished
+  // ========== FLOOR TILES - 600x600 POLISHED ==========
   {
     id: 5,
     code: "NRP660016",
     name: "Polished Porcelain Tile",
     category: "600x600 Polished",
+    type: "floor-tile",
     sizes: ["600x600"],
     colors: ["Marble White", "Marble Grey", "Marble Black"],
-    price: 52.99,
+    price: 529.99,
     inStock: true,
     image: "/tiles/nrp660016.jpg",
     description: "Elegant polished finish with marble aesthetics",
@@ -80,23 +84,25 @@ const defaultProducts = [
     code: "NRP660024",
     name: "Polished Porcelain Tile",
     category: "600x600 Polished",
+    type: "floor-tile",
     sizes: ["600x600"],
     colors: ["Ivory Polish", "Grey Polish"],
-    price: 54.99,
+    price: 549.99,
     inStock: false,
     image: "/tiles/nrp660024.jpg",
     description: "Premium polished porcelain for luxury applications",
   },
 
-  // 600x600 Matt (Slip Resistant)
+  // ========== FLOOR TILES - 600x600 MATT ==========
   {
     id: 7,
     code: "MSM66031M",
     name: "Matt Porcelain Tile",
     category: "600x600 Matt",
+    type: "floor-tile",
     sizes: ["600x600"],
     colors: ["Matte White", "Matte Grey", "Matte Beige"],
-    price: 42.99,
+    price: 429.99,
     inStock: true,
     slipResistant: true,
     image: "/tiles/msm66031m.jpg",
@@ -107,24 +113,26 @@ const defaultProducts = [
     code: "MSM66032M",
     name: "Matt Porcelain Tile",
     category: "600x600 Matt",
+    type: "floor-tile",
     sizes: ["600x600"],
     colors: ["Stone Grey", "Earth Brown"],
-    price: 43.99,
+    price: 439.99,
     inStock: true,
     slipResistant: true,
     image: "/tiles/msm66032m.jpg",
     description: "Natural stone look with safety grip surface",
   },
 
-  // 60x120 Glazed
+  // ========== FLOOR TILES - 60x120 LARGE FORMAT ==========
   {
     id: 9,
     code: "NRP61011",
     name: "Large Format Glazed Tile",
     category: "60x120 Glazed",
+    type: "floor-tile",
     sizes: ["60x120"],
     colors: ["White", "Grey", "Beige", "Anthracite"],
-    price: 65.99,
+    price: 659.99,
     inStock: true,
     image: "/tiles/nrp61011.jpg",
     description: "Modern large format glazed tile for spacious areas",
@@ -134,23 +142,23 @@ const defaultProducts = [
     code: "NRP61012",
     name: "Large Format Glazed Tile",
     category: "60x120 Glazed",
+    type: "floor-tile",
     sizes: ["60x120"],
     colors: ["Marble Effect", "Concrete Grey"],
-    price: 68.99,
+    price: 689.99,
     inStock: true,
     image: "/tiles/nrp61012.jpg",
     description: "Contemporary large tile with designer finishes",
   },
-
-  // 60x120 Polished
   {
     id: 11,
     code: "NRP61003",
     name: "Large Format Polished Tile",
     category: "60x120 Polished",
+    type: "floor-tile",
     sizes: ["60x120"],
     colors: ["Marble White", "Marble Grey"],
-    price: 72.99,
+    price: 729.99,
     inStock: false,
     image: "/tiles/nrp61003.jpg",
     description: "Luxury polished large format for premium projects",
@@ -160,16 +168,106 @@ const defaultProducts = [
     code: "NRP61004",
     name: "Large Format Polished Tile",
     category: "60x120 Polished",
+    type: "floor-tile",
     sizes: ["60x120"],
     colors: ["Ivory Polish", "Pearl Grey"],
-    price: 74.99,
+    price: 749.99,
     inStock: true,
     image: "/tiles/nrp61004.jpg",
     description: "High-end polished tile for statement installations",
   },
+
+  // ========== ROOFING SHEETS - NEW PRODUCTS ==========
+  {
+    id: 13,
+    code: "DA02",
+    name: "IBR Roof Sheet",
+    category: "Roofing Sheets",
+    type: "roofing",
+    sizes: ["0.5mm", "0.6mm"],
+    colors: ["White", "Blue", "Brown", "Grey", "Green", "Red"],
+    price: 185.0,
+    inStock: true,
+    image: "/roofing/ibr-da02.jpg",
+    description:
+      "IBR (Inverted Box Rib) roofing sheet - popular choice for residential and commercial roofing",
+    unit: "per meter",
+  },
+  {
+    id: 14,
+    code: "DA04",
+    name: "Corrugated Roof Sheet",
+    category: "Roofing Sheets",
+    type: "roofing",
+    sizes: ["0.5mm", "0.6mm"],
+    colors: ["White", "Blue", "Brown", "Grey", "Green", "Red"],
+    price: 175.0,
+    inStock: true,
+    image: "/roofing/corrugated-da04.jpg",
+    description:
+      "Traditional corrugated roofing sheet - durable and cost-effective",
+    unit: "per meter",
+  },
+  {
+    id: 15,
+    code: "DA07",
+    name: "Widespan Roof Sheet",
+    category: "Roofing Sheets",
+    type: "roofing",
+    sizes: ["0.5mm", "0.6mm"],
+    colors: ["White", "Blue", "Brown", "Grey", "Green", "Red"],
+    price: 195.0,
+    inStock: true,
+    image: "/roofing/widespan-da07.jpg",
+    description: "Widespan roofing sheet - wider coverage, fewer sheets needed",
+    unit: "per meter",
+  },
+  {
+    id: 16,
+    code: "DA03",
+    name: "Tile Effect Roof Sheet (Grey)",
+    category: "Roofing Sheets",
+    type: "roofing",
+    sizes: ["0.5mm", "0.6mm"],
+    colors: ["Grey", "Brown", "Green"],
+    price: 210.0,
+    inStock: true,
+    image: "/roofing/tile-da03.jpg",
+    description:
+      "Tile effect roofing sheet - combines durability with aesthetic appeal",
+    unit: "per meter",
+  },
+  {
+    id: 17,
+    code: "DA05",
+    name: "Tile Effect Roof Sheet (Brown)",
+    category: "Roofing Sheets",
+    type: "roofing",
+    sizes: ["0.5mm", "0.6mm"],
+    colors: ["Brown", "Terracotta", "Red"],
+    price: 210.0,
+    inStock: true,
+    image: "/roofing/tile-da05.jpg",
+    description: "Tile effect roofing sheet in brown/terracotta finish",
+    unit: "per meter",
+  },
+  {
+    id: 18,
+    code: "DA08",
+    name: "Tile Effect Roof Sheet (Green)",
+    category: "Roofing Sheets",
+    type: "roofing",
+    sizes: ["0.5mm", "0.6mm"],
+    colors: ["Green", "Forest Green"],
+    price: 210.0,
+    inStock: true,
+    image: "/roofing/tile-da08.jpg",
+    description: "Tile effect roofing sheet in green finish",
+    unit: "per meter",
+  },
 ];
 
-const DATA_VERSION = "v1.0-ncc-12products";
+const DATA_VERSION = "v2.0-ncc-with-roofing";
 
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
@@ -194,6 +292,7 @@ export const ProductProvider = ({ children }) => {
       }
       setLoading(false);
     };
+
     loadProducts();
   }, []);
 
@@ -229,7 +328,7 @@ export const ProductProvider = ({ children }) => {
   };
 
   const deleteProduct = (productId) => {
-    if (window.confirm("Delete this product?")) {
+    if (window.confirm("Are you sure you want to delete this product?")) {
       setProducts((prev) => prev.filter((p) => p.id !== productId));
       return true;
     }
@@ -249,7 +348,11 @@ export const ProductProvider = ({ children }) => {
   };
 
   const resetToDefaults = () => {
-    if (window.confirm("⚠️ Reset to official 12 NCC products?")) {
+    if (
+      window.confirm(
+        "⚠️ This will delete all custom products and restore defaults. Continue?",
+      )
+    ) {
       localStorage.setItem("ncc_products", JSON.stringify(defaultProducts));
       localStorage.setItem("ncc_data_version", DATA_VERSION);
       setProducts(defaultProducts);
@@ -260,9 +363,12 @@ export const ProductProvider = ({ children }) => {
 
   const getByCategory = (category) =>
     products.filter((p) => p.category === category);
+  const getByType = (type) => products.filter((p) => p.type === type);
   const getInStock = () => products.filter((p) => p.inStock);
   const getById = (id) => products.find((p) => p.id === Number(id));
+
   const categories = [...new Set(products.map((p) => p.category))].sort();
+  const productTypes = [...new Set(products.map((p) => p.type))];
 
   const searchProducts = (query) => {
     const q = query.toLowerCase();
@@ -279,6 +385,7 @@ export const ProductProvider = ({ children }) => {
       value={{
         products,
         categories,
+        productTypes,
         loading,
         addProduct,
         updateProduct,
@@ -287,12 +394,15 @@ export const ProductProvider = ({ children }) => {
         updateProductImage,
         resetToDefaults,
         getByCategory,
+        getByType,
         getInStock,
         getById,
         searchProducts,
         totalProducts: products.length,
         inStockCount: products.filter((p) => p.inStock).length,
         outOfStockCount: products.filter((p) => !p.inStock).length,
+        floorTilesCount: products.filter((p) => p.type === "floor-tile").length,
+        roofingCount: products.filter((p) => p.type === "roofing").length,
       }}
     >
       {children}

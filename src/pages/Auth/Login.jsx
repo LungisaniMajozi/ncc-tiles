@@ -85,13 +85,6 @@ const AdminLogin = () => {
             Sign In
           </button>
         </form>
-
-        <div className="mt-6 text-center text-xs text-gray-500">
-          <p>
-            Demo credentials:{" "}
-            <code className="bg-gray-100 px-1 rounded">admin / ncc2024</code>
-          </p>
-        </div>
       </div>
     </div>
   );

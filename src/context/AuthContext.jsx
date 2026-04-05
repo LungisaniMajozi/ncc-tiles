@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = (username, password) => {
     // 🔐 Demo credentials - replace with real API later
-    if (username === "admin" && password === "ncc2024") {
+    if (username === "admin@ncc.co.za" && password === "ncc@2024") {
       const userData = { username, role: "admin", name: "NCC Admin" };
       localStorage.setItem("ncc_admin", JSON.stringify(userData));
       setUser(userData);

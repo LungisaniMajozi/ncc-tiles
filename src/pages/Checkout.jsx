@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useOrders } from "../context/OrdersContext";
+import { useAuth } from "../context/AuthContext";
 import {
   CheckCircle,
   Phone,
@@ -12,18 +13,26 @@ import {
   Send,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { downloadOrderPDF } from "../utils/pdfGenerator";
 import emailjs from "@emailjs/browser";
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { cart, total, clearCart } = useCart();
   const { addOrder } = useOrders();
+  const { isAuth, loading } = useAuth();
   const [step, setStep] = useState(1);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderCartItems, setOrderCartItems] = useState([]);
   const [isSending, setIsSending] = useState(false);
+
+  // 🔐 Authentication Check - Redirect if not signed in
+  useEffect(() => {
+    if (!loading && !isAuth()) {
+      navigate("/login", { state: { from: location } });
+    }
+  }, [isAuth, loading, navigate, location]);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -51,109 +60,28 @@ const Checkout = () => {
       .replace("ZAR", "R");
   };
 
-  // 🇿 Gauteng Towns
-  const gautengTowns = [
-    "Alberton",
-    "Arcadia",
-    "Atteridgeville",
-    "Auckland Park",
-    "Benoni",
-    "Berea",
-    "Blairgowrie",
-    "Boksburg",
-    "Braamfontein",
-    "Brakpan",
-    "Bronkhorstspruit",
-    "Brooklyn",
-    "Bryanston",
-    "Carletonville",
-    "Centurion",
-    "Clayville",
-    "Clubview",
-    "Constantia Park",
-    "Coronationville",
-    "Craighall",
-    "Craighall Park",
-    "Cullinan",
-    "De Deur",
-    "Doringkloof",
-    "Edenvale",
-    "Eldorado Park",
-    "Eldoraigne",
-    "Ennerdale",
-    "Faerie Glen",
-    "Ferndale",
-    "Fordsburg",
-    "Fourways",
-    "Ga-Rankuwa",
-    "Garsfontein",
-    "Germiston",
-    "Greenside",
-    "Hammanskraal",
-    "Hatfield",
-    "Heidelberg",
-    "Hillbrow",
-    "Houghton",
-    "Irene",
-    "Johannesburg",
-    "Joubert Park",
-    "Kempton Park",
-    "Killarney",
-    "Krugersdorp",
-    "Lenasia",
-    "Lone Hill",
-    "Lyttelton",
-    "Lynnwood",
-    "Mabopane",
-    "Mamelodi",
-    "Mayfair",
-    "Menlyn",
-    "Menlo Park",
-    "Midrand",
-    "Midvaal",
-    "Melville",
-    "Meyerton",
-    "Moreleta Park",
-    "Newclare",
-    "Newlands",
-    "Newtown",
-    "Nigel",
-    "Norwood",
-    "Orange Farm",
-    "Parkhurst",
-    "Parktown",
-    "Paulshof",
-    "Pretoria",
-    "Pretoria Central",
-    "Pretoria East",
-    "Pretoria North",
-    "Pretoria West",
-    "Proclamation Hill",
-    "Randburg",
-    "Randfontein",
-    "Rivonia",
-    "Riverlea",
-    "Roodepoort",
-    "Rosebank",
-    "Sandton",
-    "Silver Lakes",
-    "Sophiatown",
-    "Soshanguve",
-    "Soweto",
-    "Springs",
-    "Sunnyside",
-    "Temba",
-    "The Reeds",
-    "Vanderbijlpark",
-    "Vereeniging",
-    "Waterkloof",
-    "Westbury",
-    "Westcliff",
-    "Westonaria",
-    "Woodmead",
-    "Yeoville",
-    "Zwartkop",
-  ].sort();
+  const [deliveryLocations, setDeliveryLocations] = useState([]);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/delivery/");
+        if (res.ok) {
+          const data = await res.json();
+          setDeliveryLocations(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch delivery locations", err);
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  const selectedLocation = deliveryLocations.find(
+    (l) => l.town === formData.city,
+  );
+  const deliveryFee = selectedLocation ? selectedLocation.price : 0;
+  const finalTotal = total + deliveryFee;
 
   // 📧 Company Info
   const companyEmail = "info@ncctiles.co.za";
@@ -163,208 +91,7 @@ const Checkout = () => {
   const companyPhone3 = "063 448 1130";
   const companyAddress = "9692 de Luba Crescent, Clayville Ext 79";
 
-  // 🔹 Generate PDF Receipt - TEXT ONLY (NO IMAGES)
-  const generatePDF = (
-    orderNumber,
-    orderDate,
-    paymentMethod,
-    customerName,
-    phone,
-    email,
-    address,
-    city,
-    postalCode,
-    subtotal,
-    cartItems,
-  ) => {
-    const doc = new jsPDF();
 
-    // Header
-    doc.setFillColor(30, 64, 175);
-    doc.rect(0, 0, 210, 35, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("NCC TILES SUPPLIER", 105, 15, { align: "center" });
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Naeve Construction Company", 105, 22, { align: "center" });
-    doc.setFontSize(8);
-    doc.text(companyAddress, 105, 28, { align: "center" });
-    doc.text(
-      `Tel: ${companyPhone1} | ${companyPhone2} | ${companyPhone3}`,
-      105,
-      33,
-      { align: "center" },
-    );
-
-    // Title & Order Info
-    doc.setTextColor(30, 64, 175);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("ORDER CONFIRMATION", 14, 48);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Order Reference: ${orderNumber}`, 14, 56);
-    doc.text(`Date: ${orderDate}`, 14, 61);
-    const paymentText =
-      paymentMethod === "cod"
-        ? "Payment Method: Cash on Delivery"
-        : "Payment Method: EFT (Pay Before Delivery)";
-    doc.text(paymentText, 14, 66);
-
-    // Customer Box
-    doc.setDrawColor(200, 200, 200);
-    doc.setFillColor(249, 250, 251);
-    doc.rect(14, 72, 182, 40, "FD");
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("CUSTOMER DETAILS", 18, 80);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(`Name: ${customerName}`, 18, 87);
-    doc.text(`Phone: ${phone}`, 18, 92);
-    doc.text(`Email: ${email}`, 18, 97);
-    doc.text(`Address: ${address}`, 18, 102);
-    doc.text(`Town: ${city}, ${postalCode}`, 18, 107);
-
-    // Items Table (TEXT ONLY)
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("ORDER ITEMS", 14, 125);
-
-    const tableData = cartItems.map((item) => [
-      item.code || "N/A",
-      item.name || "Unknown Product",
-      item.size || item.sizes?.[0] || "600x600",
-      `${item.quantity || 1} m²`,
-      formatPrice(item.price || 0),
-      formatPrice((item.price || 0) * (item.quantity || 1)),
-    ]);
-
-    autoTable(doc, {
-      startY: 130,
-      head: [["Code", "Product", "Size", "Qty", "Price/m²", "Total"]],
-      body: tableData,
-      theme: "grid",
-      headStyles: {
-        fillColor: [30, 64, 175],
-        textColor: 255,
-        fontStyle: "bold",
-        fontSize: 8,
-      },
-      bodyStyles: { fontSize: 8 },
-      styles: { cellPadding: 2 },
-      columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 50 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 25 },
-        5: { cellWidth: 25 },
-      },
-    });
-
-    // Totals
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Subtotal: ${formatPrice(subtotal)}`, 140, finalY);
-    doc.text(`Delivery: To be calculated (Manual)`, 140, finalY + 5);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 64, 175);
-    doc.text(`Total: ${formatPrice(subtotal)} (+ delivery)`, 140, finalY + 12);
-
-    // Payment Instructions
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("PAYMENT INSTRUCTIONS:", 14, finalY + 25);
-    doc.setFont("helvetica", "normal");
-    if (paymentMethod === "cod") {
-      doc.text(
-        "• Cash on Delivery - Pay when you receive your order",
-        14,
-        finalY + 30,
-      );
-      doc.text("• We accept cash or EFT on delivery", 14, finalY + 34);
-    } else {
-      doc.text("• EFT Payment Required Before Delivery", 14, finalY + 30);
-      doc.text("• Banking details will be provided via email", 14, finalY + 34);
-      doc.text(
-        "• Delivery will be scheduled after payment confirmation",
-        14,
-        finalY + 38,
-      );
-    }
-
-    // Notes
-    doc.setFont("helvetica", "bold");
-    doc.text("IMPORTANT NOTES:", 14, finalY + 48);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      "• Delivery charges will be calculated manually based on location",
-      14,
-      finalY + 53,
-    );
-    doc.text(
-      "• Admin will contact you within 24 hours with final amount",
-      14,
-      finalY + 57,
-    );
-    doc.text(
-      `• For queries: ${companyPhone1} | ${companyEmail}`,
-      14,
-      finalY + 61,
-    );
-
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(128, 128, 128);
-    doc.text("Thank you for choosing NCC Tiles Supplier!", 105, 280, {
-      align: "center",
-    });
-
-    return { doc, pdfBase64: doc.output("datauristring") };
-  };
-
-  // 🔹 Download PDF
-  const downloadPDF = (
-    orderNumber,
-    orderDate,
-    paymentMethod,
-    customerName,
-    phone,
-    email,
-    address,
-    city,
-    postalCode,
-    subtotal,
-  ) => {
-    const items = orderCartItems.length > 0 ? orderCartItems : cart;
-    if (items.length === 0) return alert("⚠️ No items available");
-    try {
-      const { doc } = generatePDF(
-        orderNumber,
-        orderDate,
-        paymentMethod,
-        customerName,
-        phone,
-        email,
-        address,
-        city,
-        postalCode,
-        subtotal,
-        items,
-      );
-      doc.save(`${orderNumber}.pdf`);
-    } catch (err) {
-      console.error("PDF Error:", err);
-      alert("❌ Error generating PDF");
-    }
-  };
 
   // 🔹 Send Email via EmailJS
   const sendOrderEmail = async (orderData, cartItems) => {
@@ -409,7 +136,8 @@ const Checkout = () => {
       order_number: orderData.orderNumber,
       order_date: orderData.orderDate,
       payment_method: paymentText,
-      order_total: formatPrice(orderData.subtotal),
+      order_total: formatPrice(orderData.subtotal + orderData.delivery_fee),
+      delivery_fee: formatPrice(orderData.delivery_fee),
       customer_name: orderData.customerName,
       customer_phone: orderData.phone,
       customer_email: orderData.email,
@@ -454,65 +182,62 @@ const Checkout = () => {
       setStep(2);
       return;
     }
-    if (!formData.paymentMethod) return alert("⚠️ Select payment method");
 
     setIsSending(true);
     const orderNumber = `NCC-${Date.now().toString().slice(-8)}`;
-    const orderDate = new Date().toLocaleDateString("en-ZA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
     const customerName = `${formData.firstName} ${formData.lastName}`;
 
-    const orderData = {
-      orderNumber,
-      orderDate,
-      customerName,
+    const orderDataToSubmit = {
+      orderNumber: orderNumber,
+      customerName: customerName,
       phone: formData.phone,
       email: formData.email,
       address: formData.address,
       city: formData.city,
       postalCode: formData.postalCode,
       deliveryNote: formData.deliveryNote,
-      paymentMethod: formData.paymentMethod,
-      subtotal: total,
-      status: "pending",
+      paymentMethod: "eft",
+      delivery_fee: deliveryFee,
+      status: "Pending Payment",
+      items: cart.map(i => ({ product_id: i.id, quantity: i.quantity, price: i.price }))
     };
 
     try {
-      const { pdfBase64 } = generatePDF(
-        orderData.orderNumber,
-        orderData.orderDate,
-        orderData.paymentMethod,
-        orderData.customerName,
-        orderData.phone,
-        orderData.email,
-        orderData.address,
-        orderData.city,
-        orderData.postalCode,
-        orderData.subtotal,
-        cart,
-      );
-      const emailResult = await sendOrderEmail(orderData, cart);
-      addOrder({
-        ...orderData,
-        items: cart,
-        pdfBase64,
-        emailSent: emailResult.success,
+      const response = await fetch("http://localhost:8000/api/orders/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("ncc_token")}`,
+          },
+          body: JSON.stringify(orderDataToSubmit),
       });
-      setOrderCartItems([...cart]);
-      setTimeout(() => {
+
+      if (response.ok) {
+        const orderSummary = {
+          orderNumber,
+          orderDate: new Date().toLocaleDateString(),
+          paymentMethod: "eft",
+          customerName,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          subtotal: total,
+          delivery_fee: deliveryFee,
+        };
+        
+        await sendOrderEmail(orderSummary, cart);
+        
+        window.orderDataForSuccessPage = orderSummary;
         setOrderComplete(true);
-        window.orderDataForSuccessPage = orderData;
-      }, 800);
+        setOrderCartItems([...cart]);
+      } else {
+        alert("❌ Failed to create order. Please try again.");
+      }
     } catch (err) {
       console.error("Order Error:", err);
-      alert("⚠️ Order saved locally. Email may have failed.");
-      setOrderComplete(true);
-      window.orderDataForSuccessPage = orderData;
+      alert("❌ Order submission failed. Please try again.");
     } finally {
       setIsSending(false);
     }
@@ -598,18 +323,20 @@ const Checkout = () => {
           <div className="space-y-3 mb-6">
             <button
               onClick={() =>
-                downloadPDF(
-                  od.orderNumber,
-                  od.orderDate,
-                  od.paymentMethod,
-                  od.customerName,
-                  od.phone,
-                  od.email,
-                  od.address,
-                  od.city,
-                  od.postalCode,
-                  od.subtotal,
-                )
+                downloadOrderPDF({
+                  orderNumber: od.orderNumber,
+                  created_at: new Date(od.orderDate).toISOString(),
+                  paymentMethod: od.paymentMethod,
+                  customerName: od.customerName,
+                  phone: od.phone,
+                  email: od.email,
+                  address: od.address,
+                  city: od.city,
+                  postalCode: od.postalCode,
+                  total_amount: od.subtotal + (od.delivery_fee || 0),
+                  delivery_fee: od.delivery_fee,
+                  items: orderCartItems
+                })
               }
               className="block w-full bg-primary text-white py-4 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2 font-semibold shadow-lg"
             >
@@ -640,7 +367,8 @@ const Checkout = () => {
               </span>
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              Total: {formatPrice(od.subtotal)} (+ delivery)
+              Total: {formatPrice(od.subtotal + (od.delivery_fee || 0))}{" "}
+              (Includes Delivery)
             </p>
             <p className="text-sm text-gray-600">
               Payment: {od.paymentMethod === "cod" ? "Cash on Delivery" : "EFT"}
@@ -663,6 +391,18 @@ const Checkout = () => {
             Continue Shopping
           </button>
         </motion.div>
+      </div>
+    );
+  }
+
+  // Show loading state during authentication check
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -762,9 +502,9 @@ const Checkout = () => {
                   className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
                 >
                   <option value="">Select Town/City *</option>
-                  {gautengTowns.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
+                  {deliveryLocations.map((l) => (
+                    <option key={l.id} value={l.town}>
+                      {l.town} (R{l.price})
                     </option>
                   ))}
                 </select>
@@ -790,58 +530,62 @@ const Checkout = () => {
                 type="submit"
                 className="w-full mt-6 bg-primary text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition"
               >
-                Continue →
+                Continue to Payment →
               </button>
             </>
           ) : (
             <>
               <h2 className="text-xl font-bold text-secondary mb-6">
-                Payment Method
+                Bank Transfer (EFT)
               </h2>
-              <div className="space-y-4 mb-6">
-                <div
-                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${formData.paymentMethod === "cod" ? "border-primary bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
-                  onClick={() =>
-                    setFormData({ ...formData, paymentMethod: "cod" })
-                  }
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">Cash on Delivery</span>
-                    <DollarSign className="text-green-600" />
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+                <div className="flex items-start space-x-3 mb-4">
+                  <CreditCard
+                    className="text-blue-600 flex-shrink-0 mt-1"
+                    size={24}
+                  />
+                  <div>
+                    <p className="font-semibold text-blue-800 mb-2">
+                      🏦 Direct Bank Transfer
+                    </p>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Please make your payment directly into our bank account. Your order will not be shipped until the funds have cleared in our account.
+                    </p>
+                    <div className="bg-white p-4 rounded-lg border border-blue-100 mb-3">
+                      <p className="text-sm text-gray-800"><strong>Bank:</strong> FNB (First National Bank)</p>
+                      <p className="text-sm text-gray-800"><strong>Account Name:</strong> Naeve Construction Company</p>
+                      <p className="text-sm text-gray-800"><strong>Account Number:</strong> 628XXXXXXXX</p>
+                      <p className="text-sm text-gray-800"><strong>Branch Code:</strong> 250655</p>
+                    </div>
+                    <p className="text-sm text-blue-800 font-semibold">
+                      Important: Use your Order Number as the payment reference.
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Pay when you receive your order. Cash or EFT accepted.
-                  </p>
-                </div>
-                <div
-                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${formData.paymentMethod === "eft" ? "border-primary bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
-                  onClick={() =>
-                    setFormData({ ...formData, paymentMethod: "eft" })
-                  }
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">
-                      EFT - Pay Before Delivery
-                    </span>
-                    <CreditCard className="text-blue-600" />
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Banking details emailed after submission.
-                  </p>
                 </div>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-start space-x-3">
-                <Mail
-                  className="text-blue-600 flex-shrink-0 mt-0.5"
-                  size={20}
-                />
-                <div>
-                  <p className="font-semibold text-blue-800">
-                    📧 Email Notification
-                  </p>
-                  <p className="text-sm text-blue-700">
-                    Admin notified instantly. Download receipt after submission.
-                  </p>
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <h3 className="font-semibold text-gray-800 mb-3">
+                  Order Summary
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Subtotal:</span>
+                    <span className="font-semibold">{formatPrice(total)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Delivery Fee:</span>
+                    <span className="font-semibold">
+                      {formatPrice(deliveryFee)}
+                    </span>
+                  </div>
+                  <div className="border-t pt-2 flex justify-between">
+                    <span className="font-semibold text-gray-800">
+                      Total Amount:
+                    </span>
+                    <span className="font-bold text-lg text-primary">
+                      {formatPrice(finalTotal)}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -855,7 +599,7 @@ const Checkout = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={!formData.paymentMethod || isSending}
+                  disabled={isSending}
                   className="flex-1 bg-accent text-white py-4 rounded-xl disabled:opacity-50 flex items-center justify-center space-x-2 hover:bg-blue-700 transition"
                 >
                   {isSending ? (
@@ -866,7 +610,7 @@ const Checkout = () => {
                   ) : (
                     <>
                       <Send size={18} />
-                      <span>Submit & Notify Admin</span>
+                      <span>Place Order & Notify Admin</span>
                     </>
                   )}
                 </button>

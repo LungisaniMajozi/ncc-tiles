@@ -11,7 +11,7 @@ import {
   Package,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import jsPDF from "jspdf";
+import { downloadOrderPDF } from "../../utils/pdfGenerator";
 
 const Orders = () => {
   const { orders, deleteOrder, updateOrderStatus } = useOrders();
@@ -28,25 +28,9 @@ const Orders = () => {
     return matchesSearch && matchesFilter;
   });
 
-  // ✅ Download PDF from stored base64
+  // ✅ Download PDF dynamically
   const downloadPDF = (order) => {
-    if (!order.pdfBase64) {
-      alert("⚠️ PDF not available for this order");
-      return;
-    }
-
-    try {
-      // Create link to download PDF from base64
-      const link = document.createElement("a");
-      link.href = order.pdfBase64;
-      link.download = `${order.orderNumber}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error downloading PDF:", error);
-      alert("❌ Error downloading PDF");
-    }
+    downloadOrderPDF(order);
   };
 
   const getStatusColor = (status) => {
@@ -199,7 +183,7 @@ const Orders = () => {
                         {new Intl.NumberFormat("en-ZA", {
                           style: "currency",
                           currency: "ZAR",
-                        }).format(order.subtotal || 0)}
+                        }).format(order.total_amount || 0)}
                       </td>
                       <td className="px-6 py-4">
                         <select
@@ -216,14 +200,13 @@ const Orders = () => {
                         </select>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {new Date(order.createdAt).toLocaleDateString()}
+                        {new Date(order.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => downloadPDF(order)}
-                            disabled={!order.pdfBase64}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
                             title="Download PDF"
                           >
                             <Download size={16} />

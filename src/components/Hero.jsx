@@ -13,14 +13,14 @@ const Hero = () => {
           muted
           playsInline
           className="w-full h-full object-cover"
-          poster="/tiles/hero-poster.jpg"
+          poster="/images/hero_poster.png"
         >
           <source src="/videos/tiles-showcase1.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
 
         {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-br from-secondary/90 via-primary/80 to-blue-900/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-secondary/90 via-secondary/60 to-secondary/90 backdrop-blur-[2px]"></div>
       </div>
 
       {/* Content */}

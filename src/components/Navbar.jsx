@@ -22,13 +22,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-primary p-2 rounded-lg">
-              <Package className="text-white" size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-secondary">NCC</h1>
-              <p className="text-xs text-gray-500 -mt-1">Tiles Supplier</p>
-            </div>
+            <img src="/ncc_logo.png" alt="NCC Tiles Logo" className="h-12 object-contain" />
           </Link>
 
           {/* Desktop Links */}
@@ -45,12 +39,32 @@ const Navbar = () => {
             >
               Products
             </Link>
+            <Link
+              to="/about"
+              className="text-gray-700 hover:text-primary font-medium"
+            >
+              About Us
+            </Link>
+            <Link
+              to="/testimonials"
+              className="text-gray-700 hover:text-primary font-medium"
+            >
+              Testimonials
+            </Link>
             {isAdmin() && (
               <Link
                 to="/admin"
                 className="text-gray-700 hover:text-primary font-medium"
               >
                 Admin
+              </Link>
+            )}
+            {user && !isAdmin() && (
+              <Link
+                to="/track-order"
+                className="text-gray-700 hover:text-primary font-medium"
+              >
+                Track Orders
               </Link>
             )}
           </div>
@@ -78,6 +92,10 @@ const Navbar = () => {
                 <span className="text-sm">Login</span>
               </Link>
             )}
+
+            <button className="hidden md:block bg-secondary text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-800 transition">
+              Get Free Quote
+            </button>
 
             <button
               onClick={() => setIsOpen(true)}
@@ -118,6 +136,20 @@ const Navbar = () => {
             >
               Products
             </Link>
+            <Link
+              to="/about"
+              className="block py-2 text-gray-700"
+              onClick={() => setMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              to="/testimonials"
+              className="block py-2 text-gray-700"
+              onClick={() => setMenuOpen(false)}
+            >
+              Testimonials
+            </Link>
             {isAdmin() && (
               <Link
                 to="/admin"
@@ -125,6 +157,15 @@ const Navbar = () => {
                 onClick={() => setMenuOpen(false)}
               >
                 Admin
+              </Link>
+            )}
+            {user && !isAdmin() && (
+              <Link
+                to="/track-order"
+                className="block py-2 text-gray-700"
+                onClick={() => setMenuOpen(false)}
+              >
+                Track Orders
               </Link>
             )}
             {!user ? (

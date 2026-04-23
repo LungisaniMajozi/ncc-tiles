@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useProducts } from "../../context/ProductContext";
+import SuccessView from "../../components/SuccessView";
 import {
   Plus,
   Edit,
@@ -41,6 +42,8 @@ const ProductManager = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [newCategory, setNewCategory] = useState("");
   const [showCategoryInput, setShowCategoryInput] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [customColor, setCustomColor] = useState("");
 
   const resetForm = () => {
     setFormData({
@@ -58,6 +61,7 @@ const ProductManager = () => {
     setImagePreview(null);
     setEditingProduct(null);
     setShowForm(false);
+    setSuccessMsg("");
   };
 
   const handleEdit = (product) => {
@@ -82,7 +86,7 @@ const ProductManager = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("Image size should be less than 5MB");
+        // Handle gracefully
         return;
       }
       const reader = new FileReader();
@@ -121,24 +125,29 @@ const ProductManager = () => {
       !formData.category ||
       !formData.price
     ) {
-      alert("Please fill in all required fields");
       return;
     }
 
     const productData = {
       ...formData,
       price: parseFloat(formData.price),
-      colors: formData.colors.filter((c) => c.trim() !== ""),
     };
 
     if (editingProduct) {
       updateProduct(editingProduct.id, productData);
-      alert("✅ Product updated successfully!");
+      setSuccessMsg("Product updated successfully!");
     } else {
       addProduct(productData);
-      alert("✅ Product added successfully!");
+      setSuccessMsg("Product added successfully!");
     }
-    resetForm();
+  };
+
+  const handleDelete = async (id) => {
+    const success = await deleteProduct(id);
+    if (success) {
+      setSuccessMsg("Product deleted successfully!");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    }
   };
 
   // Safe filtering with null checks
@@ -158,8 +167,12 @@ const ProductManager = () => {
     return matchesSearch && matchesCategory && matchesStock;
   });
 
-  // Safe categories array
+  // Safe categories array with predefined defaults
   const safeCategories = categories || [];
+  const allCategories = Array.from(new Set(["Tiles", "Roof Sheets", "Tile Combos", ...safeCategories]));
+
+  const baseColors = ["White", "Black", "Grey", "Beige", "Charcoal", "Cream", "Brown", "Patterned"];
+  const allBoxColors = Array.from(new Set([...baseColors, ...formData.colors]));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -268,7 +281,7 @@ const ProductManager = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
               >
                 <option value="all">All Categories</option>
-                {safeCategories.map((cat) => (
+                {allCategories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
@@ -377,7 +390,7 @@ const ProductManager = () => {
                           <Edit size={16} />
                         </button>
                         <button
-                          onClick={() => deleteProduct(product.id)}
+                          onClick={() => handleDelete(product.id)}
                           className="p-1.5 text-red-600 hover:bg-red-50 rounded transition"
                           title="Delete"
                         >
@@ -431,6 +444,13 @@ const ProductManager = () => {
 
               {/* Modal Body */}
               <div className="flex-1 overflow-y-auto p-6">
+                {successMsg ? (
+                  <SuccessView 
+                     title="Success!" 
+                     message={successMsg} 
+                     onContinue={resetForm} 
+                  />
+                ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Image Upload */}
                   <div>
@@ -528,7 +548,7 @@ const ProductManager = () => {
                         required
                       >
                         <option value="">Select Category</option>
-                        {safeCategories.map((cat) => (
+                        {allCategories.map((cat) => (
                           <option key={cat} value={cat}>
                             {cat}
                           </option>
@@ -635,13 +655,18 @@ const ProductManager = () => {
                       <Tag className="inline mr-1" size={14} /> Sizes
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {["600x600", "60x120", "80x80", "30x60"].map((size) => (
+                      {["600x600", "60x120", "80x80", "30x60", "90x90", "120x120", "Custom"].map((size) => (
                         <button
                           key={size}
                           type="button"
-                          onClick={() =>
-                            setFormData({ ...formData, sizes: [size] })
-                          }
+                          onClick={() => {
+                            setFormData(prev => ({
+                               ...prev,
+                               sizes: prev.sizes.includes(size)
+                                 ? prev.sizes.filter(s => s !== size)
+                                 : [...prev.sizes, size]
+                            }))
+                          }}
                           className={`px-4 py-2 border rounded-lg text-sm ${
                             formData.sizes.includes(size)
                               ? "border-primary bg-primary/10 text-primary"
@@ -654,44 +679,63 @@ const ProductManager = () => {
                     </div>
                   </div>
 
-                  {/* Colors */}
+                  {/* Colors - Dropdown Grid Approach */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Layers className="inline mr-1" size={14} /> Available
-                      Colors
+                      <Layers className="inline mr-1" size={14} /> Available Colors
                     </label>
-                    <div className="space-y-2">
-                      {formData.colors.map((color, index) => (
-                        <div key={index} className="flex space-x-2">
-                          <input
-                            type="text"
-                            value={color}
-                            onChange={(e) =>
-                              handleColorChange(index, e.target.value)
-                            }
-                            placeholder={`Color ${index + 1}`}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeColor(index)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                            disabled={formData.colors.length === 1}
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {allBoxColors.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                               ...prev,
+                               colors: prev.colors.includes(color)
+                                 ? prev.colors.filter(c => c !== color)
+                                 : [...prev.colors, color]
+                            }))
+                          }}
+                          className={`px-4 py-2 border rounded-lg text-sm ${
+                            formData.colors.includes(color)
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-gray-300 hover:border-primary"
+                          }`}
+                        >
+                          {color}
+                        </button>
                       ))}
+                    </div>
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                        placeholder="Add custom color..."
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                      />
                       <button
                         type="button"
-                        onClick={addColor}
-                        className="text-sm text-primary hover:text-blue-700 flex items-center space-x-1"
+                        onClick={() => {
+                          if (customColor.trim()) {
+                            setFormData(prev => ({
+                              ...prev,
+                              colors: prev.colors.includes(customColor.trim())
+                                ? prev.colors
+                                : [...prev.colors, customColor.trim()]
+                            }));
+                            setCustomColor("");
+                          }
+                        }}
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition"
                       >
-                        <Plus size={14} />
-                        <span>Add Color</span>
+                        Add Color
                       </button>
                     </div>
                   </div>
+
+
 
                   {/* Slip Resistant */}
                   <div>
@@ -752,6 +796,7 @@ const ProductManager = () => {
                     </button>
                   </div>
                 </form>
+                )}
               </div>
             </motion.div>
           </>

@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  MapPin,
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -51,6 +52,13 @@ const AdminDashboard = () => {
             >
               <FileText size={18} />
               <span>View Orders</span>
+            </Link>
+            <Link
+              to="/admin/delivery"
+              className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+            >
+              <MapPin size={18} />
+              <span>Delivery Rates</span>
             </Link>
             <Link
               to="/admin/products"
@@ -368,7 +376,7 @@ const AdminDashboard = () => {
         {/* Quick Actions */}
         <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
           <h2 className="font-bold text-secondary mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Link
               to="/admin/products"
               className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-primary hover:text-white transition group"
@@ -388,6 +396,16 @@ const AdminDashboard = () => {
                 className="mb-2 text-accent group-hover:text-white"
               />
               <span className="text-sm font-medium">View Orders</span>
+            </Link>
+            <Link
+              to="/admin/delivery"
+              className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-purple-600 hover:text-white transition group"
+            >
+              <MapPin
+                size={24}
+                className="mb-2 text-purple-600 group-hover:text-white"
+              />
+              <span className="text-sm font-medium">Delivery Rates</span>
             </Link>
             <Link
               to="/products"

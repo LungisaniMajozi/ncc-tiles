@@ -5,6 +5,7 @@ from . import models, schemas
 from .database import engine, Base, get_db
 from .routers import auth, products, orders, delivery
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
@@ -12,16 +13,26 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# CORS Configuration
+allowed_origins = [
+    "https://ncc-tiles-eqdq.vercel.app",  # Vercel frontend
+    "http://localhost:5173",               # Local dev Vite
+    "http://localhost:3000",               # Local dev Alt
+    "https://ncc-tiles.vercel.app",        # Production Vercel (if different)
+]
+
+# Add custom origins from environment if provided
+custom_origin = os.getenv("ALLOWED_ORIGIN")
+if custom_origin:
+    allowed_origins.append(custom_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://ncc-tiles-eqdq.vercel.app",  # Your Vercel domain
-        "http://localhost:5173",  # Local dev
-        "http://localhost:3000",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(auth.router)

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import API_BASE_URL from "../config/api";
 
 const OrdersContext = createContext();
 
@@ -14,14 +15,14 @@ export const OrdersProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { token, isAuth, isAdmin } = useAuth();
 
-  const API_URL = "http://localhost:8000/api";
+  const API_URL = API_BASE_URL;
 
   const fetchOrders = async () => {
     if (!token || !isAdmin()) return;
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/orders/`, {
-        headers: { "Authorization": `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) setOrders(await res.json());
     } catch (err) {
@@ -35,7 +36,7 @@ export const OrdersProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/orders/my`, {
-        headers: { "Authorization": `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) setOrders(await res.json());
     } catch (err) {
@@ -65,19 +66,19 @@ export const OrdersProvider = ({ children }) => {
         pdfBase64: orderData.pdfBase64,
         emailSent: orderData.emailSent,
         status: orderData.status,
-        items: orderData.items.map(i => ({
-             product_id: i.id,
-             quantity: i.quantity || 1,
-             price: i.price || 0
-        }))
+        items: orderData.items.map((i) => ({
+          product_id: i.id,
+          quantity: i.quantity || 1,
+          price: i.price || 0,
+        })),
       };
       const res = await fetch(`${API_URL}/orders/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(backendOrderData)
+        body: JSON.stringify(backendOrderData),
       });
       if (res.ok) {
         const newOrder = await res.json();
@@ -99,13 +100,13 @@ export const OrdersProvider = ({ children }) => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status }),
       });
       if (res.ok) {
         const updated = await res.json();
-        setOrders((prev) => prev.map(o => o.id === orderId ? updated : o));
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
       }
     } catch (error) {
       console.error(error);

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import API_BASE_URL from "../config/api";
 
 const AuthContext = createContext();
 
@@ -13,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = "http://localhost:8000/api";
+  const API_URL = API_BASE_URL;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("ncc_user");
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
-      
+
       if (response.ok) {
         localStorage.setItem("ncc_user", JSON.stringify(data.user));
         localStorage.setItem("ncc_token", data.access_token);
@@ -56,9 +57,9 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ name, email, password, role: "customer" }),
       });
       const data = await response.json();
-      
+
       if (response.ok) {
-        return await login(email, password); 
+        return await login(email, password);
       } else {
         return { success: false, error: data.detail || "Registration failed" };
       }
@@ -78,9 +79,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch(`${API_URL}/auth/me`, {
         method: "PUT",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` 
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(updates),
       });
@@ -93,7 +94,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: data.detail || "Update failed" };
       }
     } catch (err) {
-       return { success: false, error: "Network error." };
+      return { success: false, error: "Network error." };
     }
   };
 
@@ -106,7 +107,11 @@ export const AuthProvider = ({ children }) => {
       });
       const data = await response.json();
       if (response.ok) {
-        return { success: true, message: data.message, dev_token: data.dev_token };
+        return {
+          success: true,
+          message: data.message,
+          dev_token: data.dev_token,
+        };
       } else {
         return { success: false, error: data.detail || "Request failed" };
       }
@@ -137,7 +142,21 @@ export const AuthProvider = ({ children }) => {
   const isAuth = () => !!user;
 
   return (
-    <AuthContext.Provider value={{ user, token, register, login, logout, isAdmin, isAuth, loading, updateUser, forgotPassword, resetPassword }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        register,
+        login,
+        logout,
+        isAdmin,
+        isAuth,
+        loading,
+        updateUser,
+        forgotPassword,
+        resetPassword,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

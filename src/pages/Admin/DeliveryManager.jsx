@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Save, Plus, Trash2, MapPin } from "lucide-react";
+import API_BASE_URL from "../../config/api";
 
 const DeliveryManager = () => {
   const { user } = useAuth();
@@ -18,7 +19,7 @@ const DeliveryManager = () => {
 
   const fetchLocations = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/delivery/");
+      const res = await fetch(`${API_BASE_URL}/delivery/`);
       if (res.ok) {
         const data = await res.json();
         setLocations(data);
@@ -34,13 +35,15 @@ const DeliveryManager = () => {
 
   const handlePriceChange = (id, newPrice) => {
     setLocations((prev) =>
-      prev.map((loc) => (loc.id === id ? { ...loc, price: Number(newPrice) } : loc))
+      prev.map((loc) =>
+        loc.id === id ? { ...loc, price: Number(newPrice) } : loc,
+      ),
     );
   };
 
   const saveLocation = async (loc) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/delivery/${loc.id}`, {
+      const res = await fetch(`${API_BASE_URL}/delivery/${loc.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -60,9 +63,10 @@ const DeliveryManager = () => {
   };
 
   const deleteLocation = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this location?")) return;
+    if (!window.confirm("Are you sure you want to delete this location?"))
+      return;
     try {
-      const res = await fetch(`http://localhost:8000/api/delivery/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/delivery/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -82,7 +86,7 @@ const DeliveryManager = () => {
     e.preventDefault();
     if (!newTown || newPrice === "") return;
     try {
-      const res = await fetch("http://localhost:8000/api/delivery/", {
+      const res = await fetch(`${API_BASE_URL}/delivery/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,7 +96,9 @@ const DeliveryManager = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setLocations((prev) => [...prev, data].sort((a, b) => a.town.localeCompare(b.town)));
+        setLocations((prev) =>
+          [...prev, data].sort((a, b) => a.town.localeCompare(b.town)),
+        );
         setNewTown("");
         setNewPrice("");
       } else {
@@ -111,12 +117,19 @@ const DeliveryManager = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link to="/admin" className="text-gray-500 hover:text-primary transition">
+            <Link
+              to="/admin"
+              className="text-gray-500 hover:text-primary transition"
+            >
               <ArrowLeft size={24} />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-secondary">Delivery Rates Manager</h1>
-              <p className="text-sm text-gray-500">Manage delivery towns and prices</p>
+              <h1 className="text-2xl font-bold text-secondary">
+                Delivery Rates Manager
+              </h1>
+              <p className="text-sm text-gray-500">
+                Manage delivery towns and prices
+              </p>
             </div>
           </div>
         </div>
@@ -132,7 +145,9 @@ const DeliveryManager = () => {
             </h2>
             <form onSubmit={addLocation} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Town Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Town Name
+                </label>
                 <input
                   type="text"
                   required
@@ -143,7 +158,9 @@ const DeliveryManager = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Price (R)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Delivery Price (R)
+                </label>
                 <input
                   type="number"
                   required
@@ -176,7 +193,9 @@ const DeliveryManager = () => {
             </div>
 
             {loading ? (
-              <div className="p-8 text-center text-gray-500">Loading locations...</div>
+              <div className="p-8 text-center text-gray-500">
+                Loading locations...
+              </div>
             ) : error ? (
               <div className="p-8 text-center text-red-500">{error}</div>
             ) : (
@@ -184,22 +203,32 @@ const DeliveryManager = () => {
                 <table className="w-full text-left">
                   <thead className="bg-gray-50 sticky top-0 border-b">
                     <tr>
-                      <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Town</th>
-                      <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Price (R)</th>
-                      <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase text-right">Actions</th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">
+                        Town
+                      </th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase">
+                        Price (R)
+                      </th>
+                      <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase text-right">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {locations.map((loc) => (
                       <tr key={loc.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-gray-700">{loc.town}</td>
+                        <td className="px-4 py-3 font-medium text-gray-700">
+                          {loc.town}
+                        </td>
                         <td className="px-4 py-3">
                           <input
                             type="number"
                             min="0"
                             step="0.01"
                             value={loc.price}
-                            onChange={(e) => handlePriceChange(loc.id, e.target.value)}
+                            onChange={(e) =>
+                              handlePriceChange(loc.id, e.target.value)
+                            }
                             className="w-24 px-2 py-1 border rounded focus:border-primary outline-none"
                           />
                         </td>
@@ -223,7 +252,10 @@ const DeliveryManager = () => {
                     ))}
                     {locations.length === 0 && (
                       <tr>
-                        <td colSpan="3" className="px-4 py-8 text-center text-gray-500">
+                        <td
+                          colSpan="3"
+                          className="px-4 py-8 text-center text-gray-500"
+                        >
                           No locations found
                         </td>
                       </tr>

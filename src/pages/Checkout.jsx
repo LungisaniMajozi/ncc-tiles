@@ -13,6 +13,7 @@ import {
   Send,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import API_BASE_URL from "../config/api";
 import { downloadOrderPDF } from "../utils/pdfGenerator";
 import emailjs from "@emailjs/browser";
 
@@ -65,7 +66,7 @@ const Checkout = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/delivery/");
+        const res = await fetch(`${API_BASE_URL}/delivery/`);
         if (res.ok) {
           const data = await res.json();
           setDeliveryLocations(data);
@@ -90,8 +91,6 @@ const Checkout = () => {
   const companyPhone2 = "063 993 9627";
   const companyPhone3 = "063 448 1130";
   const companyAddress = "9692 de Luba Crescent, Clayville Ext 79";
-
-
 
   // 🔹 Send Email via EmailJS
   const sendOrderEmail = async (orderData, cartItems) => {
@@ -199,17 +198,20 @@ const Checkout = () => {
       paymentMethod: "eft",
       delivery_fee: deliveryFee,
       status: "Pending Payment",
-      items: cart.map(i => ({ product_id: i.id, quantity: i.quantity, price: i.price }))
+      items: cart.map((i) => ({
+        product_id: i.id,
+        quantity: i.quantity,
+        price: i.price,
+      })),
     };
 
     try {
-      const response = await fetch("http://localhost:8000/api/orders/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("ncc_token")}`,
-          },
-          body: JSON.stringify(orderDataToSubmit),
+      const response = await fetch(`${API_BASE_URL}/orders/`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("ncc_token")}`,
+        },
+        body: JSON.stringify(orderDataToSubmit),
       });
 
       if (response.ok) {
@@ -226,9 +228,9 @@ const Checkout = () => {
           subtotal: total,
           delivery_fee: deliveryFee,
         };
-        
+
         await sendOrderEmail(orderSummary, cart);
-        
+
         window.orderDataForSuccessPage = orderSummary;
         setOrderComplete(true);
         setOrderCartItems([...cart]);
@@ -335,7 +337,7 @@ const Checkout = () => {
                   postalCode: od.postalCode,
                   total_amount: od.subtotal + (od.delivery_fee || 0),
                   delivery_fee: od.delivery_fee,
-                  items: orderCartItems
+                  items: orderCartItems,
                 })
               }
               className="block w-full bg-primary text-white py-4 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2 font-semibold shadow-lg"
@@ -549,13 +551,24 @@ const Checkout = () => {
                       🏦 Direct Bank Transfer
                     </p>
                     <p className="text-sm text-blue-700 mb-3">
-                      Please make your payment directly into our bank account. Your order will not be shipped until the funds have cleared in our account.
+                      Please make your payment directly into our bank account.
+                      Your order will not be shipped until the funds have
+                      cleared in our account.
                     </p>
                     <div className="bg-white p-4 rounded-lg border border-blue-100 mb-3">
-                      <p className="text-sm text-gray-800"><strong>Bank:</strong> FNB (First National Bank)</p>
-                      <p className="text-sm text-gray-800"><strong>Account Name:</strong> Naeve Construction Company</p>
-                      <p className="text-sm text-gray-800"><strong>Account Number:</strong> 628XXXXXXXX</p>
-                      <p className="text-sm text-gray-800"><strong>Branch Code:</strong> 250655</p>
+                      <p className="text-sm text-gray-800">
+                        <strong>Bank:</strong> FNB (First National Bank)
+                      </p>
+                      <p className="text-sm text-gray-800">
+                        <strong>Account Name:</strong> Naeve Construction
+                        Company
+                      </p>
+                      <p className="text-sm text-gray-800">
+                        <strong>Account Number:</strong> 628XXXXXXXX
+                      </p>
+                      <p className="text-sm text-gray-800">
+                        <strong>Branch Code:</strong> 250655
+                      </p>
                     </div>
                     <p className="text-sm text-blue-800 font-semibold">
                       Important: Use your Order Number as the payment reference.

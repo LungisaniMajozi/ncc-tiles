@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
-import models, schemas, database
+from .. import models, schemas, database
 from .auth import get_current_admin
 
 router = APIRouter(prefix="/api/delivery", tags=["delivery"])

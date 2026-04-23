@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
-import models, schemas, database
+from .. import models, schemas, database
 from .auth import get_current_user, get_current_admin
 import requests, hashlib
 from urllib.parse import urlencode

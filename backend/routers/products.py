@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List
-import models, schemas, database
+from .. import models, schemas, database
 from .auth import get_current_admin
 
 router = APIRouter(prefix="/api/products", tags=["products"])

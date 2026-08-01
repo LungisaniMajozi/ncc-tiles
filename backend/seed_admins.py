@@ -4,10 +4,10 @@ import os
 # Ensure backend directory is in path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from database import SessionLocal, engine
-from models import User
-from routers.auth import get_password_hash
-import database
+from backend.database import SessionLocal, engine
+from backend.models import User
+from backend.routers.auth import get_password_hash
+from backend import database
 
 def seed_admins():
     db = SessionLocal()

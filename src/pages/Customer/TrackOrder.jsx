@@ -2,11 +2,69 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useOrders } from "../../context/OrdersContext";
 import { downloadOrderPDF } from "../../utils/pdfGenerator";
+import emailjs from "@emailjs/browser";
+import API_BASE_URL from "../../config/api";
 
 const TrackOrder = () => {
     const { user, isAuth } = useAuth();
     const { orders, fetchUserOrders } = useOrders();
     const [loading, setLoading] = useState(true);
+
+    const handleCancelOrder = async (order) => {
+        if (!window.confirm(`Are you sure you want to cancel order ${order.orderNumber}?`)) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/orders/${order.id}/cancel`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("ncc_token")}`,
+                },
+            });
+            if (!res.ok) throw new Error("Failed to cancel order");
+            
+            // Send cancellation email
+            const params = {
+                order_number: `⚠️ [CANCELLED] ${order.orderNumber} ⚠️`,
+                order_date: new Date(order.created_at).toLocaleDateString(),
+                payment_method: order.paymentMethod || "EFT",
+                order_total: `R${order.total_amount.toFixed(2)}`,
+                delivery_fee: `R${(order.delivery_fee || 0).toFixed(2)}`,
+                customer_name: order.customerName || user.name,
+                customer_phone: order.phone || "",
+                customer_email: order.email || user.email,
+                customer_address: order.address || "",
+                customer_town: order.city || "",
+                payment_instruction_1: "THIS ORDER WAS CANCELLED BY THE CUSTOMER.",
+                payment_instruction_2: "Do not process this order.",
+                payment_instruction_3: "",
+                company_address: "9692 de Luba Crescent, Clayville Ext 79",
+                company_phone: "067 045 8628",
+                to_email: import.meta.env.VITE_EMAILJS_ADMIN_EMAIL || "info@ncctiles.co.za",
+                to_name: "NCC Tiles Admin",
+                from_name: order.customerName || user.name,
+                reply_to: order.email || user.email,
+                items: order.items.map(i => ({
+                    name: i.product?.name || "Unknown",
+                    quantity: i.quantity,
+                    price: `R${i.price}`,
+                    total: `R${(i.price * i.quantity).toFixed(2)}`
+                }))
+            };
+
+            await emailjs.send(
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+                params,
+                import.meta.env.VITE_EMAILJS_USER_ID,
+            );
+
+            if (fetchUserOrders) fetchUserOrders();
+            alert("Order cancelled successfully.");
+        } catch (err) {
+            console.error("Cancellation Error", err);
+            alert("Failed to cancel order. Please try again or contact support.");
+        }
+    };
 
     useEffect(() => {
         if(isAuth()){
@@ -41,6 +99,14 @@ const TrackOrder = () => {
                                     <p className="text-sm text-gray-500">{new Date(order.created_at).toLocaleString()}</p>
                                 </div>
                                 <div className="text-right flex items-center space-x-4">
+                                    {(order.status.toLowerCase() === "pending" || order.status.toLowerCase() === "pending_payment" || order.status.toLowerCase() === "pending payment") && (
+                                        <button 
+                                            onClick={() => handleCancelOrder(order)}
+                                            className="text-red-500 text-sm hover:underline font-medium"
+                                        >
+                                            ❌ Cancel Order
+                                        </button>
+                                    )}
                                     <button 
                                         onClick={() => downloadOrderPDF(order)}
                                         className="text-primary text-sm hover:underline font-medium"

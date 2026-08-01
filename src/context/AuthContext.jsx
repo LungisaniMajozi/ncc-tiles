@@ -138,6 +138,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/me`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        logout();
+        return { success: true };
+      }
+      const data = await response.json();
+      return { success: false, error: data.detail || "Account deletion failed" };
+    } catch (err) {
+      return { success: false, error: "Network error" };
+    }
+  };
+
   const isAdmin = () => user?.role === "admin";
   const isAuth = () => !!user;
 
@@ -155,6 +172,7 @@ export const AuthProvider = ({ children }) => {
         updateUser,
         forgotPassword,
         resetPassword,
+        deleteAccount,
       }}
     >
       {children}

@@ -60,12 +60,20 @@ const Navbar = () => {
               </Link>
             )}
             {user && !isAdmin() && (
-              <Link
-                to="/track-order"
-                className="text-gray-700 hover:text-primary font-medium"
-              >
-                Track Orders
-              </Link>
+              <>
+                <Link
+                  to="/track-order"
+                  className="text-gray-700 hover:text-primary font-medium"
+                >
+                  Track Orders
+                </Link>
+                <Link
+                  to="/profile"
+                  className="text-gray-700 hover:text-primary font-medium"
+                >
+                  My Profile
+                </Link>
+              </>
             )}
           </div>
 
@@ -160,13 +168,22 @@ const Navbar = () => {
               </Link>
             )}
             {user && !isAdmin() && (
-              <Link
-                to="/track-order"
-                className="block py-2 text-gray-700"
-                onClick={() => setMenuOpen(false)}
-              >
-                Track Orders
-              </Link>
+              <>
+                <Link
+                  to="/track-order"
+                  className="block py-2 text-gray-700"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Track Orders
+                </Link>
+                <Link
+                  to="/profile"
+                  className="block py-2 text-gray-700"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  My Profile
+                </Link>
+              </>
             )}
             {!user ? (
               <Link

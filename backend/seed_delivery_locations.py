@@ -1,5 +1,5 @@
-from database import SessionLocal, engine
-import models
+from backend.database import SessionLocal, engine
+from backend import models
 import sys
 
 print("Starting seed script...")
@@ -43,9 +43,9 @@ def seed():
         
         print(f"Committing {count} new locations...")
         db.commit()
-        print(f"✓ Successfully seeded {count} new delivery locations.")
+        print(f"Successfully seeded {count} new delivery locations.")
     except Exception as e:
-        print(f"✗ Error: {type(e).__name__}: {e}")
+        print(f"Error: {type(e).__name__}: {e}")
         try:
             db.rollback()
         except:

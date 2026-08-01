@@ -1,8 +1,6 @@
-from database import SessionLocal, engine, Base
-import models
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from backend.database import SessionLocal, engine, Base
+from backend import models
+import bcrypt
 
 def seed():
     Base.metadata.create_all(bind=engine)
@@ -13,7 +11,7 @@ def seed():
             name="Admin",
             email="admin@ncc.co.za",
             role="admin",
-            password_hash=pwd_context.hash("admin123")
+            password_hash=bcrypt.hashpw("admin123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         )
         db.add(admin)
         db.commit()

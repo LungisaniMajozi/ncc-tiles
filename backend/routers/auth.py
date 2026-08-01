@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from .. import models, schemas, database
-from passlib.context import CryptContext
+import bcrypt
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
@@ -12,18 +12,22 @@ from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "supersecretkey_change_in_production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 1 day
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        if isinstance(hashed_password, str):
+            hashed_password = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
+    except Exception:
+        return False
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def get_password_hash(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -137,6 +141,25 @@ def update_user_me(user_update: schemas.UserUpdate, db: Session = Depends(databa
     db.commit()
     db.refresh(current_user)
     return current_user
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_me(db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
+    # Check constraints: user can only be deleted if all their orders are completed or cancelled
+    orders = db.query(models.Order).filter(models.Order.user_id == current_user.id).all()
+    for order in orders:
+        if order.status.lower() not in ["completed", "cancelled"]:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot delete account with active or pending orders. Please wait for them to complete or cancel them."
+            )
+            
+    # Safe to delete - unlink historical orders
+    for order in orders:
+        order.user_id = None
+        
+    db.delete(current_user)
+    db.commit()
+    return None
 
 import uuid
 

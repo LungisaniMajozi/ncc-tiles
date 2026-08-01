@@ -22,7 +22,7 @@ const Checkout = () => {
   const location = useLocation();
   const { cart, total, clearCart } = useCart();
   const { addOrder } = useOrders();
-  const { isAuth, loading } = useAuth();
+  const { isAuth, loading, user } = useAuth();
   const [step, setStep] = useState(1);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderCartItems, setOrderCartItems] = useState([]);
@@ -46,6 +46,19 @@ const Checkout = () => {
     deliveryNote: "",
     paymentMethod: "",
   });
+
+  // 📝 Auto-fill Delivery Information from Auth User
+  useEffect(() => {
+    if (user && !formData.email) {
+      const nameParts = user.name ? user.name.split(" ") : [];
+      setFormData((prev) => ({
+        ...prev,
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        email: user.email || "",
+      }));
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -186,6 +199,7 @@ const Checkout = () => {
     const orderNumber = `NCC-${Date.now().toString().slice(-8)}`;
     const customerName = `${formData.firstName} ${formData.lastName}`;
 
+    // Default EFT Flow
     const orderDataToSubmit = {
       orderNumber: orderNumber,
       customerName: customerName,
@@ -207,6 +221,7 @@ const Checkout = () => {
 
     try {
       const response = await fetch(`${API_BASE_URL}/orders/`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("ncc_token")}`,
@@ -455,8 +470,9 @@ const Checkout = () => {
                   value={formData.firstName}
                   onChange={handleChange}
                   required
+                  readOnly={!!user?.name}
                   placeholder="First Name *"
-                  className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${user?.name ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                 />
                 <input
                   type="text"
@@ -464,8 +480,9 @@ const Checkout = () => {
                   value={formData.lastName}
                   onChange={handleChange}
                   required
+                  readOnly={!!user?.name}
                   placeholder="Last Name *"
-                  className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${user?.name ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                 />
                 <input
                   type="tel"
@@ -482,8 +499,9 @@ const Checkout = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  readOnly={!!user?.email}
                   placeholder="Email *"
-                  className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  className={`px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${user?.email ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                 />
               </div>
               <input
@@ -576,6 +594,7 @@ const Checkout = () => {
                   </div>
                 </div>
               </div>
+
               <div className="bg-gray-50 rounded-xl p-4 mb-6">
                 <h3 className="font-semibold text-gray-800 mb-3">
                   Order Summary

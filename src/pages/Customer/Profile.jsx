@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { User, Mail, Save } from "lucide-react";
+import { User, Mail, Save, Trash2, AlertTriangle } from "lucide-react";
 import SuccessView from "../../components/SuccessView";
 
 const Profile = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, deleteAccount } = useAuth();
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || ""
   });
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,6 +26,17 @@ const Profile = () => {
       setErrorMsg(res.error);
     }
     setLoading(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    setErrorMsg("");
+    const res = await deleteAccount();
+    if (!res.success) {
+      setErrorMsg(res.error);
+      setShowConfirmDelete(false);
+    }
+    setDeleteLoading(false);
   };
 
   if (success) {
@@ -70,6 +83,45 @@ const Profile = () => {
             {loading ? "Saving..." : <><Save size={18} /> Save Changes</>}
           </button>
         </form>
+        
+        {/* Danger Zone */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <h3 className="text-xl font-bold text-red-600 mb-4 flex items-center gap-2">
+            <AlertTriangle size={20} /> Danger Zone
+          </h3>
+          <p className="text-gray-600 text-sm mb-4">
+            Once you delete your account, there is no going back. Please be certain. You can only delete your account if all your orders are either completed or cancelled.
+          </p>
+          
+          {showConfirmDelete ? (
+            <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+              <p className="text-red-800 font-semibold mb-3">Are you absolutely sure?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteLoading}
+                  className="flex-1 bg-red-600 text-white py-2 rounded font-semibold hover:bg-red-700 transition flex justify-center items-center"
+                >
+                  {deleteLoading ? "Deleting..." : "Yes, Delete Account"}
+                </button>
+                <button
+                  onClick={() => setShowConfirmDelete(false)}
+                  disabled={deleteLoading}
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded font-semibold hover:bg-gray-300 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowConfirmDelete(true)}
+              className="w-full border-2 border-red-600 text-red-600 py-3 rounded-lg font-semibold hover:bg-red-50 transition flex justify-center items-center gap-2"
+            >
+              <Trash2 size={18} /> Delete Account
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

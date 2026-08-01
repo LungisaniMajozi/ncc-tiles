@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -8,10 +8,97 @@ import requests, hashlib
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 load_dotenv()
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
+
+def send_admin_order_email(order_id: int, order_number: str, customer_name: str, total_amount: float, status: str):
+    admin_email = os.getenv("VITE_EMAILJS_ADMIN_EMAIL", "lungisaniimajozi@gmail.com")
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = os.getenv("SMTP_EMAIL")
+    sender_password = os.getenv("SMTP_PASSWORD")
+    
+    if not sender_email or not sender_password:
+        print("[SMTP Warning] Admin order email not sent due to missing SMTP credentials in .env")
+        return
+        
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"New Order Received: {order_number}"
+    msg["From"] = sender_email
+    msg["To"] = admin_email
+    
+    html_content = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #1a56db;">New Order Notification</h2>
+        <p>A new order has been placed on the system.</p>
+        <ul>
+            <li><strong>Order ID:</strong> {order_id}</li>
+            <li><strong>Order Number:</strong> {order_number}</li>
+            <li><strong>Customer:</strong> {customer_name}</li>
+            <li><strong>Total Amount:</strong> R{total_amount:.2f}</li>
+            <li><strong>Current Status:</strong> {status}</li>
+        </ul>
+        <p>Please log in to the admin dashboard to manage this order.</p>
+      </body>
+    </html>
+    """
+    msg.attach(MIMEText(html_content, "html"))
+    
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, admin_email, msg.as_string())
+        server.quit()
+        print(f"Sent admin order notification email to {admin_email}")
+    except Exception as e:
+        print(f"[SMTP Warning] Could not send admin order email. Error: {e}")
+
+def send_customer_status_email(customer_email: str, order_number: str, customer_name: str, status: str):
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = os.getenv("SMTP_EMAIL")
+    sender_password = os.getenv("SMTP_PASSWORD")
+    
+    if not sender_email or not sender_password or not customer_email:
+        return
+        
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"Update on Your Order: {order_number}"
+    msg["From"] = sender_email
+    msg["To"] = customer_email
+    
+    html_content = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #1a56db;">Order Status Update</h2>
+        <p>Hi {customer_name},</p>
+        <p>There is an update on your order <strong>{order_number}</strong>.</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 16px;"><strong>New Status:</strong> {status}</p>
+        </div>
+        <p>You can check the full details of your order by logging into your account dashboard.</p>
+        <p>Thank you for shopping with us!</p>
+      </body>
+    </html>
+    """
+    msg.attach(MIMEText(html_content, "html"))
+    
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, customer_email, msg.as_string())
+        server.quit()
+        print(f"Sent status update email to {customer_email}")
+    except Exception as e:
+        print(f"[SMTP Warning] Could not send status update email. Error: {e}")
 
 # PayFast Configuration
 PAYFAST_MERCHANT_ID = os.getenv("PAYFAST_MERCHANT_ID", "10000100")
@@ -50,20 +137,35 @@ def generate_signature(data: dict, passphrase: str) -> str:
     return hashlib.md5(param_string.encode()).hexdigest()
 
 @router.post("/", response_model=schemas.OrderResponse)
-def create_order(order: schemas.OrderCreate, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
-    total_amount = sum(item.price * item.quantity for item in order.items) + (order.delivery_fee or 0.0)
-    order_data = order.model_dump(exclude={"items"})
-    new_order = models.Order(user_id=current_user.id, total_amount=total_amount, **order_data)
-    db.add(new_order)
-    db.commit()
-    db.refresh(new_order)
-    
-    for item in order.items:
-        db_item = models.OrderItem(order_id=new_order.id, product_id=item.product_id, quantity=item.quantity, price=item.price)
-        db.add(db_item)
-    db.commit()
-    db.refresh(new_order)
-    return new_order
+def create_order(order: schemas.OrderCreate, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
+    try:
+        total_amount = sum(item.price * item.quantity for item in order.items) + (order.delivery_fee or 0.0)
+        order_data = order.model_dump(exclude={"items"})
+        new_order = models.Order(user_id=current_user.id, total_amount=total_amount, **order_data)
+        db.add(new_order)
+        db.commit()
+        db.refresh(new_order)
+        
+        for item in order.items:
+            db_item = models.OrderItem(order_id=new_order.id, product_id=item.product_id, quantity=item.quantity, price=item.price)
+            db.add(db_item)
+        db.commit()
+        db.refresh(new_order)
+        
+        background_tasks.add_task(
+            send_admin_order_email, 
+            order_id=new_order.id, 
+            order_number=new_order.orderNumber or f"ORD-{new_order.id}", 
+            customer_name=new_order.customerName or current_user.name, 
+            total_amount=new_order.total_amount, 
+            status=new_order.status
+        )
+        
+        return new_order
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating order: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create order due to a database exception.")
 
 @router.get("/my", response_model=List[schemas.OrderResponse])
 def get_my_orders(db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
@@ -76,11 +178,60 @@ def get_all_orders(db: Session = Depends(database.get_db), current_user: models.
     return orders
 
 @router.put("/{order_id}/status", response_model=schemas.OrderResponse)
-def update_order_status(order_id: int, status_update: OrderStatusUpdate, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_admin)):
+def update_order_status(order_id: int, status_update: OrderStatusUpdate, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_admin)):
     db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not db_order:
         raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Store old status to check if it really changed
+    old_status = db_order.status
     db_order.status = status_update.status
+    db.commit()
+    db.refresh(db_order)
+    
+    # Only send email if status changed and user has an email
+    if old_status != status_update.status and db_order.email:
+        background_tasks.add_task(
+            send_customer_status_email,
+            customer_email=db_order.email,
+            order_number=db_order.orderNumber or f"ORD-{db_order.id}",
+            customer_name=db_order.customerName or "Customer",
+            status=db_order.status
+        )
+        
+    return db_order
+
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_order(order_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_admin)):
+    """Admin endpoint to entirely remove completed or cancelled orders from the database"""
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    # Check if order is eligible for deletion
+    if db_order.status.lower() not in ["completed", "cancelled"]:
+        raise HTTPException(status_code=400, detail="Ensure the order is marked as 'Completed' or 'Cancelled' before deleting.")
+        
+    # Delete related order items first to avoid foreign key violations
+    db.query(models.OrderItem).filter(models.OrderItem.order_id == order_id).delete()
+    
+    # Delete the order itself
+    db.delete(db_order)
+    db.commit()
+    return None
+
+@router.put("/{order_id}/cancel", response_model=schemas.OrderResponse)
+def cancel_order(order_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if db_order.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to cancel this order")
+    # check valid status
+    if db_order.status.lower() not in ["pending", "pending payment", "pending_payment"]:
+        raise HTTPException(status_code=400, detail="Only pending orders can be cancelled")
+        
+    db_order.status = "Cancelled"
     db.commit()
     db.refresh(db_order)
     return db_order
@@ -101,6 +252,7 @@ class PaymentInitRequest(BaseModel):
 @router.post("/initiate-payfast-payment")
 def initiate_payfast_payment(
     payment_req: PaymentInitRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -110,13 +262,14 @@ def initiate_payfast_payment(
 
         # Create order in database first
         order_data = {
-            "order_number": payment_req.order_number,
+            "orderNumber": payment_req.order_number,
+            "customerName": payment_req.customer_name,
             "phone": payment_req.phone,
             "email": payment_req.email,
             "address": payment_req.address,
             "city": payment_req.city,
-            "postal_code": payment_req.postal_code,
-            "delivery_note": payment_req.delivery_note,
+            "postalCode": payment_req.postal_code,
+            "deliveryNote": payment_req.delivery_note,
             "delivery_fee": payment_req.delivery_fee,
             "status": "pending_payment"
         }
@@ -124,6 +277,15 @@ def initiate_payfast_payment(
         db.add(new_order)
         db.commit()
         db.refresh(new_order)
+        
+        background_tasks.add_task(
+            send_admin_order_email, 
+            order_id=new_order.id, 
+            order_number=payment_req.order_number, 
+            customer_name=payment_req.customer_name, 
+            total_amount=total_amount, 
+            status=new_order.status
+        )
 
         # Add order items
         for item in payment_req.items:
@@ -197,7 +359,7 @@ async def payfast_webhook(request: Request, db: Session = Depends(database.get_d
         
         if payment_status == "COMPLETE" and order_number:
             # Update order status
-            order = db.query(models.Order).filter(models.Order.order_number == order_number).first()
+            order = db.query(models.Order).filter(models.Order.orderNumber == order_number).first()
             if order:
                 order.status = "paid"
                 db.commit()
@@ -216,7 +378,7 @@ def verify_payment(
     """Verify PayFast payment and update order status"""
     try:
         # Find order by payment_id (order_number)
-        order = db.query(models.Order).filter(models.Order.order_number == payment_id).first()
+        order = db.query(models.Order).filter(models.Order.orderNumber == payment_id).first()
         
         if not order:
             return {"status": "error", "message": "Order not found"}

@@ -175,6 +175,7 @@ def send_reset_email(to_email: str, token: str):
         "service_id": service_id,
         "template_id": template_id,
         "user_id": user_id,
+        "accessToken": os.getenv("VITE_EMAILJS_PRIVATE_KEY", ""),
         "template_params": {
             "to_email": to_email,
             "reset_token": token

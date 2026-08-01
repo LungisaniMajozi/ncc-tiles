@@ -13,7 +13,37 @@ load_dotenv()
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
-# Email functions removed - admin emails handled by frontend, customer status handled by dashboard
+def send_customer_status_email(customer_email: str, order_number: str, customer_name: str, status: str):
+    service_id = os.getenv("VITE_EMAILJS_SERVICE_ID")
+    template_id = "template_jn8ykx4"  # Master Template
+    user_id = os.getenv("VITE_EMAILJS_PUBLIC_KEY")
+    
+    if not all([service_id, template_id, user_id, customer_email]):
+        return
+        
+    url = "https://api.emailjs.com/api/v1.0/email/send"
+    payload = {
+        "service_id": service_id,
+        "template_id": template_id,
+        "user_id": user_id,
+        "accessToken": os.getenv("VITE_EMAILJS_PRIVATE_KEY", ""),
+        "template_params": {
+            "to_email": customer_email,
+            "email_subject": f"Update on Your Order: {order_number}",
+            "dynamic_html": f"""
+                <h2>Order Status Update</h2>
+                <p>Hi {customer_name},</p>
+                <p>There is an update on your order <strong>{order_number}</strong>.</p>
+                <div class="status-box">New Status: {status}</div>
+                <p>You can check the full details of your order by logging into your account dashboard.</p>
+                <p>Thank you for shopping with us!</p>
+            """
+        }
+    }
+    try:
+        requests.post(url, json=payload, headers={"Content-Type": "application/json"})
+    except Exception:
+        pass
 
 # PayFast Configuration
 PAYFAST_MERCHANT_ID = os.getenv("PAYFAST_MERCHANT_ID", "10000100")
@@ -98,7 +128,14 @@ def update_order_status(order_id: int, status_update: OrderStatusUpdate, backgro
     db.refresh(db_order)
     
     # Only send email if status changed and user has an email
-    # Customer status email omitted to save EmailJS quota, customer can check dashboard dashboard
+    if old_status != status_update.status and db_order.email:
+        background_tasks.add_task(
+            send_customer_status_email,
+            customer_email=db_order.email,
+            order_number=db_order.orderNumber or f"ORD-{db_order.id}",
+            customer_name=db_order.customerName or "Customer",
+            status=db_order.status
+        )
         
     return db_order
 

@@ -178,7 +178,15 @@ def send_reset_email(to_email: str, token: str):
         "accessToken": os.getenv("VITE_EMAILJS_PRIVATE_KEY", ""),
         "template_params": {
             "to_email": to_email,
-            "reset_token": token
+            "email_subject": "NCC Tiles - Password Reset Token",
+            "dynamic_html": f"""
+                <h2>Password Reset Request</h2>
+                <p>Hello,</p>
+                <p>We received a request to reset your password for your NCC Tiles account. If you did not make this request, please ignore this email.</p>
+                <p>Copy and paste this token into your browser:</p>
+                <div class="token-box">{token}</div>
+                <p>This link will expire in 10 minutes for security reasons.</p>
+            """
         }
     }
     

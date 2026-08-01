@@ -6,9 +6,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -164,39 +162,33 @@ def delete_user_me(db: Session = Depends(database.get_db), current_user: models.
 import uuid
 
 def send_reset_email(to_email: str, token: str):
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    sender_email = os.getenv("SMTP_EMAIL", "your_email@gmail.com")
-    sender_password = os.getenv("SMTP_PASSWORD", "your_app_password_here")
+    service_id = os.getenv("VITE_EMAILJS_SERVICE_ID")
+    template_id = "template_jn8ykx4"
+    user_id = os.getenv("VITE_EMAILJS_PUBLIC_KEY")
     
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "NCC Tiles - Password Reset Token"
-    msg["From"] = sender_email
-    msg["To"] = to_email
-    
-    html_content = f"""
-    <html>
-      <body style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #1a56db;">NCC Tiles</h2>
-        <p>You requested a password reset. Please copy the token below and enter it on the website:</p>
-        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 16px; font-weight: bold; margin: 20px 0; color: #1f2937;">
-            {token}
-        </div>
-        <p>If you did not request this, please ignore this email.</p>
-      </body>
-    </html>
-    """
-    msg.attach(MIMEText(html_content, "html"))
+    if not all([service_id, template_id, user_id]):
+        print(f"[EmailJS] Missing credentials. Generated Token: {token}")
+        return
+        
+    url = "https://api.emailjs.com/api/v1.0/email/send"
+    payload = {
+        "service_id": service_id,
+        "template_id": template_id,
+        "user_id": user_id,
+        "template_params": {
+            "to_email": to_email,
+            "reset_token": token
+        }
+    }
     
     try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, to_email, msg.as_string())
-        server.quit()
-        print(f"Sent password reset email to {to_email}")
+        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
+        if response.status_code == 200:
+            print(f"Sent password reset email to {to_email} via EmailJS")
+        else:
+            print(f"[EmailJS Error] Failed to send email. Code: {response.status_code}. Response: {response.text}. Token: {token}")
     except Exception as e:
-        print(f"[SMTP Warning] Could not send email due to invalid credentials. Token: {token}. Error: {e}")
+        print(f"[EmailJS Exception] Could not send email. Error: {e}. Token: {token}")
 
 @router.post("/forgot-password")
 def forgot_password(request: schemas.PasswordResetRequest, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):

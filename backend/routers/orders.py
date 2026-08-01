@@ -8,97 +8,12 @@ import requests, hashlib
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 load_dotenv()
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
-def send_admin_order_email(order_id: int, order_number: str, customer_name: str, total_amount: float, status: str):
-    admin_email = os.getenv("VITE_EMAILJS_ADMIN_EMAIL", "lungisaniimajozi@gmail.com")
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    sender_email = os.getenv("SMTP_EMAIL")
-    sender_password = os.getenv("SMTP_PASSWORD")
-    
-    if not sender_email or not sender_password:
-        print("[SMTP Warning] Admin order email not sent due to missing SMTP credentials in .env")
-        return
-        
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"New Order Received: {order_number}"
-    msg["From"] = sender_email
-    msg["To"] = admin_email
-    
-    html_content = f"""
-    <html>
-      <body style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #1a56db;">New Order Notification</h2>
-        <p>A new order has been placed on the system.</p>
-        <ul>
-            <li><strong>Order ID:</strong> {order_id}</li>
-            <li><strong>Order Number:</strong> {order_number}</li>
-            <li><strong>Customer:</strong> {customer_name}</li>
-            <li><strong>Total Amount:</strong> R{total_amount:.2f}</li>
-            <li><strong>Current Status:</strong> {status}</li>
-        </ul>
-        <p>Please log in to the admin dashboard to manage this order.</p>
-      </body>
-    </html>
-    """
-    msg.attach(MIMEText(html_content, "html"))
-    
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, admin_email, msg.as_string())
-        server.quit()
-        print(f"Sent admin order notification email to {admin_email}")
-    except Exception as e:
-        print(f"[SMTP Warning] Could not send admin order email. Error: {e}")
-
-def send_customer_status_email(customer_email: str, order_number: str, customer_name: str, status: str):
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    sender_email = os.getenv("SMTP_EMAIL")
-    sender_password = os.getenv("SMTP_PASSWORD")
-    
-    if not sender_email or not sender_password or not customer_email:
-        return
-        
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"Update on Your Order: {order_number}"
-    msg["From"] = sender_email
-    msg["To"] = customer_email
-    
-    html_content = f"""
-    <html>
-      <body style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #1a56db;">Order Status Update</h2>
-        <p>Hi {customer_name},</p>
-        <p>There is an update on your order <strong>{order_number}</strong>.</p>
-        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; font-size: 16px;"><strong>New Status:</strong> {status}</p>
-        </div>
-        <p>You can check the full details of your order by logging into your account dashboard.</p>
-        <p>Thank you for shopping with us!</p>
-      </body>
-    </html>
-    """
-    msg.attach(MIMEText(html_content, "html"))
-    
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, customer_email, msg.as_string())
-        server.quit()
-        print(f"Sent status update email to {customer_email}")
-    except Exception as e:
-        print(f"[SMTP Warning] Could not send status update email. Error: {e}")
+# Email functions removed - admin emails handled by frontend, customer status handled by dashboard
 
 # PayFast Configuration
 PAYFAST_MERCHANT_ID = os.getenv("PAYFAST_MERCHANT_ID", "10000100")
@@ -152,14 +67,7 @@ def create_order(order: schemas.OrderCreate, background_tasks: BackgroundTasks, 
         db.commit()
         db.refresh(new_order)
         
-        background_tasks.add_task(
-            send_admin_order_email, 
-            order_id=new_order.id, 
-            order_number=new_order.orderNumber or f"ORD-{new_order.id}", 
-            customer_name=new_order.customerName or current_user.name, 
-            total_amount=new_order.total_amount, 
-            status=new_order.status
-        )
+        # Admin email omitted here since frontend Checkout.jsx already sends Admin EmailJS receipt
         
         return new_order
     except Exception as e:
@@ -190,14 +98,7 @@ def update_order_status(order_id: int, status_update: OrderStatusUpdate, backgro
     db.refresh(db_order)
     
     # Only send email if status changed and user has an email
-    if old_status != status_update.status and db_order.email:
-        background_tasks.add_task(
-            send_customer_status_email,
-            customer_email=db_order.email,
-            order_number=db_order.orderNumber or f"ORD-{db_order.id}",
-            customer_name=db_order.customerName or "Customer",
-            status=db_order.status
-        )
+    # Customer status email omitted to save EmailJS quota, customer can check dashboard dashboard
         
     return db_order
 
@@ -278,14 +179,7 @@ def initiate_payfast_payment(
         db.commit()
         db.refresh(new_order)
         
-        background_tasks.add_task(
-            send_admin_order_email, 
-            order_id=new_order.id, 
-            order_number=payment_req.order_number, 
-            customer_name=payment_req.customer_name, 
-            total_amount=total_amount, 
-            status=new_order.status
-        )
+        # Admin email omitted here since frontend Checkout.jsx already sends Admin EmailJS receipt
 
         # Add order items
         for item in payment_req.items:

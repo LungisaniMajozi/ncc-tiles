@@ -24,6 +24,7 @@ const Checkout = () => {
   const { addOrder } = useOrders();
   const { isAuth, loading, user } = useAuth();
   const [step, setStep] = useState(1);
+  const [deliveryMethod, setDeliveryMethod] = useState("delivery");
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderCartItems, setOrderCartItems] = useState([]);
   const [isSending, setIsSending] = useState(false);
@@ -94,7 +95,7 @@ const Checkout = () => {
   const selectedLocation = deliveryLocations.find(
     (l) => l.town === formData.city,
   );
-  const deliveryFee = selectedLocation ? selectedLocation.price : 0;
+  const deliveryFee = deliveryMethod === "pickup" ? 0 : (selectedLocation ? selectedLocation.price : 0);
   const finalTotal = total + deliveryFee;
 
   // 📧 Company Info
@@ -199,15 +200,19 @@ const Checkout = () => {
     const orderNumber = `NCC-${Date.now().toString().slice(-8)}`;
     const customerName = `${formData.firstName} ${formData.lastName}`;
 
+    const finalAddress = deliveryMethod === "pickup" ? "In-Store Pickup (Clayville Hq)" : formData.address;
+    const finalCity = deliveryMethod === "pickup" ? "Clayville" : formData.city;
+    const finalPostal = deliveryMethod === "pickup" ? "1666" : formData.postalCode;
+
     // Default EFT Flow
     const orderDataToSubmit = {
       orderNumber: orderNumber,
       customerName: customerName,
       phone: formData.phone,
       email: formData.email,
-      address: formData.address,
-      city: formData.city,
-      postalCode: formData.postalCode,
+      address: finalAddress,
+      city: finalCity,
+      postalCode: finalPostal,
       deliveryNote: formData.deliveryNote,
       paymentMethod: "eft",
       delivery_fee: deliveryFee,
@@ -237,9 +242,9 @@ const Checkout = () => {
           customerName,
           phone: formData.phone,
           email: formData.email,
-          address: formData.address,
-          city: formData.city,
-          postalCode: formData.postalCode,
+          address: finalAddress,
+          city: finalCity,
+          postalCode: finalPostal,
           subtotal: total,
           delivery_fee: deliveryFee,
         };
@@ -463,6 +468,24 @@ const Checkout = () => {
               <h2 className="text-xl font-bold text-secondary mb-6">
                 Delivery Information
               </h2>
+              
+              <div className="flex gap-4 mb-6">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryMethod("delivery")}
+                  className={`flex-1 py-3 rounded-lg border-2 transition font-semibold ${deliveryMethod === "delivery" ? "border-primary bg-blue-50 text-primary" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                >
+                  🚚 Deliver to Me
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryMethod("pickup")}
+                  className={`flex-1 py-3 rounded-lg border-2 transition font-semibold ${deliveryMethod === "pickup" ? "border-primary bg-blue-50 text-primary" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                >
+                  🏬 In-Store Pickup (Free)
+                </button>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -504,40 +527,45 @@ const Checkout = () => {
                   className={`px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${user?.email ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                 />
               </div>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                required
-                placeholder="Street Address *"
-                className="w-full px-4 py-3 border rounded-lg mt-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
-              <div className="grid md:grid-cols-2 gap-4 mt-4">
-                <select
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  required
-                  className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
-                >
-                  <option value="">Select Town/City *</option>
-                  {deliveryLocations.map((l) => (
-                    <option key={l.id} value={l.town}>
-                      {l.town} (R{l.price})
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                  required
-                  placeholder="Postal Code *"
-                  className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                />
-              </div>
+              
+              {deliveryMethod === "delivery" && (
+                <>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    required
+                    placeholder="Street Address *"
+                    className="w-full px-4 py-3 border rounded-lg mt-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  />
+                  <div className="grid md:grid-cols-2 gap-4 mt-4">
+                    <select
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      required
+                      className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
+                    >
+                      <option value="">Select Town/City *</option>
+                      {deliveryLocations.map((l) => (
+                        <option key={l.id} value={l.town}>
+                          {l.town} (R{l.price})
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      name="postalCode"
+                      value={formData.postalCode}
+                      onChange={handleChange}
+                      required
+                      placeholder="Postal Code *"
+                      className="px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                    />
+                  </div>
+                </>
+              )}
               <textarea
                 name="deliveryNote"
                 value={formData.deliveryNote}
@@ -582,7 +610,7 @@ const Checkout = () => {
                         Company
                       </p>
                       <p className="text-sm text-gray-800">
-                        <strong>Account Number:</strong> 628XXXXXXXX
+                        <strong>Account Number:</strong> 1769335518
                       </p>
                       <p className="text-sm text-gray-800">
                         <strong>Branch Code:</strong> 250655

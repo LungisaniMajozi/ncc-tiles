@@ -31,19 +31,35 @@ def seed():
         print("Connected to database successfully")
         
         count = 0
-        print(f"Starting to add {len(gautengTowns)} towns...")
+        updated = 0
+        print(f"Starting to process {len(gautengTowns)} towns with tiered pricing...")
         for i, town in enumerate(gautengTowns):
-            if i % 10 == 0:
-                print(f"  Processing town {i+1}/{len(gautengTowns)}: {town}")
+            # Realistic Tiered Pricing Logic from HQ in Clayville
+            if town == "Clayville": 
+                price = 150.0
+            elif town in ["Midrand", "Irene", "Kempton Park"]: 
+                price = 250.0
+            elif town in ["Centurion", "Edenvale", "Boksburg", "Benoni", "Pretoria", "Pretoria East", "Pretoria Central", "Mamelodi", "Waterkloof", "Menlyn", "Menlo Park", "Lynnwood", "Brooklyn", "Hatfield", "Sunnyside", "Arcadia", "Faerie Glen", "Garsfontein", "Moreleta Park"]: 
+                price = 450.0
+            elif town in ["Johannesburg", "Sandton", "Rosebank", "Randburg", "Fourways", "Bryanston", "Springs", "Brakpan", "Germiston", "Alberton", "Woodmead", "Rivonia", "Lone Hill", "Paulshof", "Ferndale", "Blairgowrie", "Craighall", "Craighall Park", "Parkhurst", "Parktown", "Houghton", "Killarney", "Norwood", "Auckland Park", "Melville", "Braamfontein", "Hillbrow", "Berea", "Yeoville", "Joubert Park", "Newtown", "Fordsburg", "Mayfair"]: 
+                price = 650.0
+            elif town in ["Soweto", "Roodepoort", "Krugersdorp", "Randfontein", "Meyerton", "Vanderbijlpark", "Vereeniging", "Nigel", "Bronkhorstspruit", "Heidelberg", "Midvaal", "Carletonville", "Westonaria", "De Deur", "Ennerdale", "Orange Farm", "Eldorado Park", "Lenasia"]: 
+                price = 950.0
+            else: 
+                price = 550.0
+                
             existing = db.query(models.DeliveryLocation).filter(models.DeliveryLocation.town == town).first()
             if not existing:
-                loc = models.DeliveryLocation(town=town, price=0.0)
+                loc = models.DeliveryLocation(town=town, price=price)
                 db.add(loc)
                 count += 1
+            else:
+                existing.price = price
+                updated += 1
         
-        print(f"Committing {count} new locations...")
+        print(f"Committing {count} new locations and {updated} updated locations...")
         db.commit()
-        print(f"Successfully seeded {count} new delivery locations.")
+        print(f"Successfully processed pricing for delivery locations.")
     except Exception as e:
         print(f"Error: {type(e).__name__}: {e}")
         try:

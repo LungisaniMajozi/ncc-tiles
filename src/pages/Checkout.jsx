@@ -22,7 +22,7 @@ const Checkout = () => {
   const location = useLocation();
   const { cart, total, clearCart } = useCart();
   const { addOrder } = useOrders();
-  const { isAuth, loading, user } = useAuth();
+  const { isAuth, isAdmin, loading, user } = useAuth();
   const [step, setStep] = useState(1);
   const [deliveryMethod, setDeliveryMethod] = useState("delivery");
   const [orderComplete, setOrderComplete] = useState(false);
@@ -31,10 +31,14 @@ const Checkout = () => {
 
   // 🔐 Authentication Check - Redirect if not signed in
   useEffect(() => {
-    if (!loading && !isAuth()) {
-      navigate("/login", { state: { from: location } });
+    if (!loading) {
+      if (!isAuth()) {
+        navigate("/login", { state: { from: location } });
+      } else if (isAdmin()) {
+        navigate("/");
+      }
     }
-  }, [isAuth, loading, navigate, location]);
+  }, [isAuth, isAdmin, loading, navigate, location]);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -424,6 +428,25 @@ const Checkout = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAdmin()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">
+            Access Denied
+          </h2>
+          <p className="text-gray-600 mb-6">Admins cannot place orders.</p>
+          <button
+            onClick={() => navigate("/")}
+            className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+          >
+            Return to Home
+          </button>
         </div>
       </div>
     );

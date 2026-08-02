@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingCart, Trash2, Plus, Minus, Package } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
 const CartSidebar = () => {
@@ -13,6 +14,7 @@ const CartSidebar = () => {
     total,
     clearCart,
   } = useCart();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -200,13 +202,19 @@ const CartSidebar = () => {
                 </div>
 
                 {/* Checkout Button */}
-                <button
-                  onClick={handleCheckout}
-                  className="w-full bg-primary text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition flex items-center justify-center space-x-2"
-                >
-                  <span>Proceed to Checkout</span>
-                  <ShoppingCart size={18} />
-                </button>
+                {isAdmin() ? (
+                  <div className="text-center p-3 bg-red-50 text-red-600 rounded-xl font-medium border border-red-200">
+                    Admins cannot place orders
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleCheckout}
+                    className="w-full bg-primary text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition flex items-center justify-center space-x-2"
+                  >
+                    <span>Proceed to Checkout</span>
+                    <ShoppingCart size={18} />
+                  </button>
+                )}
 
                 {/* Continue Shopping */}
                 <Link

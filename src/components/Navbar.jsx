@@ -101,9 +101,14 @@ const Navbar = () => {
               </Link>
             )}
 
-            <button className="hidden md:block bg-secondary text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-800 transition">
+            <a 
+              href="https://wa.me/27670458628?text=Hello%20NCC%20Tiles,%20I%20would%20like%20to%20get%20a%20free%20quote!" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden md:flex items-center justify-center bg-secondary text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-800 transition"
+            >
               Get Free Quote
-            </button>
+            </a>
 
             <button
               onClick={() => setIsOpen(true)}

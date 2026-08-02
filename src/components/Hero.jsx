@@ -62,12 +62,12 @@ const Hero = () => {
             >
               Shop Collection <ArrowRight className="ml-2" size={20} />
             </Link>
-            <a
-              href="#categories"
+            <Link
+              to="/products"
               className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg border border-white/30 hover:bg-white/20 transition-all"
             >
               Explore Categories
-            </a>
+            </Link>
           </div>
 
           {/* Features */}

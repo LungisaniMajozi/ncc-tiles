@@ -67,12 +67,6 @@ const AdminDashboard = () => {
               <Plus size={18} />
               <span>Manage Products</span>
             </Link>
-            <button
-              onClick={logout}
-              className="text-sm text-red-600 hover:text-red-700 font-medium px-3 py-2 border border-red-200 rounded-lg hover:bg-red-50"
-            >
-              Logout
-            </button>
           </div>
         </div>
       </div>

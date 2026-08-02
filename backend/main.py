@@ -44,6 +44,12 @@ app.include_router(delivery.router)
 def read_root():
     return {"message": "Welcome to NCC Tiles API"}
 
+@app.get("/api/seed")
+def run_seed_endpoint():
+    from .seed import seed
+    seed()
+    return {"message": "Database seeded from endpoint!"}
+
 @app.post("/api/subscribe", response_model=schemas.SubscriberResponse)
 def subscribe(subscriber: schemas.SubscriberCreate, db: Session = Depends(get_db)):
     # Check if already subscribed

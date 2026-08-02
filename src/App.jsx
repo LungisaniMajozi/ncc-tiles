@@ -98,12 +98,12 @@ function App() {
       <Footer />
 
       {/* Floating Buttons */}
-      <div className="fixed bottom-6 right-0 flex flex-col gap-4 items-end z-50 overflow-hidden pb-4 pt-4">
+      <div className="fixed bottom-6 right-0 flex flex-col gap-4 items-end z-40 overflow-hidden pb-4 pt-4 pointer-events-none">
         <a
           href="https://www.tiktok.com/@karabo0941?is_from_webapp=1&sender_device=pc"
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-black text-white pl-4 pr-6 py-3 rounded-l-full shadow-2xl hover:bg-gray-800 transition-transform duration-300 flex items-center justify-start gap-4 cursor-pointer font-semibold translate-x-[calc(100%-3.8rem)] hover:translate-x-0"
+          className="pointer-events-auto bg-black text-white pl-4 pr-6 py-3 rounded-l-full shadow-2xl hover:bg-gray-800 transition-transform duration-300 flex items-center justify-start gap-4 cursor-pointer font-semibold translate-x-[calc(100%-3.8rem)] hover:translate-x-0"
           aria-label="See more combos on TikTok"
         >
           <FaTiktok size={24} className="flex-shrink-0" />
@@ -113,7 +113,7 @@ function App() {
           href="https://wa.me/27670458628?text=Hello%20NCC%20Tiles,%20I%20would%20like%20to%20make%20an%20enquiry!"
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-green-500 text-white pl-4 pr-6 py-3 rounded-l-full shadow-2xl hover:bg-green-600 transition-transform duration-300 flex items-center justify-start gap-4 cursor-pointer font-semibold translate-x-[calc(100%-3.8rem)] hover:translate-x-0"
+          className="pointer-events-auto bg-green-500 text-white pl-4 pr-6 py-3 rounded-l-full shadow-2xl hover:bg-green-600 transition-transform duration-300 flex items-center justify-start gap-4 cursor-pointer font-semibold translate-x-[calc(100%-3.8rem)] hover:translate-x-0"
           aria-label="Chat to us on WhatsApp"
         >
           <FaWhatsapp size={24} className="flex-shrink-0" />

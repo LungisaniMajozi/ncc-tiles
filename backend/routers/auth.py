@@ -8,6 +8,20 @@ from fastapi.security import OAuth2PasswordBearer
 import os
 import requests
 
+import re
+
+def validate_password_strength(password: str):
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long.")
+    if not re.search(r"[A-Z]", password):
+        raise HTTPException(status_code=400, detail="Password must contain at least one uppercase letter.")
+    if not re.search(r"[a-z]", password):
+        raise HTTPException(status_code=400, detail="Password must contain at least one lowercase letter.")
+    if not re.search(r"\d", password):
+        raise HTTPException(status_code=400, detail="Password must contain at least one number.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        raise HTTPException(status_code=400, detail="Password must contain at least one special character.")
+
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 SECRET_KEY = "supersecretkey_change_in_production"
@@ -72,6 +86,7 @@ def get_current_admin(current_user: models.User = Depends(get_current_user)):
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+    validate_password_strength(user.password)
     email = user.email.strip().lower()
     db_user = db.query(models.User).filter(models.User.email == email).first()
     if db_user:
@@ -87,6 +102,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
 
 @router.post("/admin", response_model=schemas.UserResponse)
 def create_admin(user: schemas.UserCreate, db: Session = Depends(database.get_db), current_admin: models.User = Depends(get_current_admin)):
+    validate_password_strength(user.password)
     email = user.email.strip().lower()
     db_user = db.query(models.User).filter(models.User.email == email).first()
     if db_user:
@@ -214,6 +230,7 @@ def forgot_password(request: schemas.PasswordResetRequest, background_tasks: Bac
 
 @router.post("/reset-password")
 def reset_password(request: schemas.PasswordResetConfirm, db: Session = Depends(database.get_db)):
+    validate_password_strength(request.new_password)
     user = db.query(models.User).filter(models.User.reset_token == request.reset_token).first()
     if not user:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token.")

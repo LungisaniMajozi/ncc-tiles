@@ -171,7 +171,7 @@ const Orders = () => {
                       <td className="px-6 py-4">
                         <div>
                           <p className="font-medium text-secondary">
-                            {order.customerName}
+                            {order.customerName || "Deleted User"}
                           </p>
                           <p className="text-xs text-gray-500">{order.phone}</p>
                         </div>

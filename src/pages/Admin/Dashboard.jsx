@@ -326,7 +326,7 @@ const AdminDashboard = () => {
                           {order.orderNumber}
                         </p>
                         <p className="text-sm text-secondary">
-                          {order.customerName}
+                          {order.customerName || "Deleted User"}
                         </p>
                         <p className="text-xs text-gray-500">{order.phone}</p>
                       </div>

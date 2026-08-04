@@ -91,6 +91,9 @@ const CustomerRegister = () => {
                 required
               />
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Must be at least 8 chars, include uppercase, lowercase, number & special char.
+            </p>
           </div>
 
           <button

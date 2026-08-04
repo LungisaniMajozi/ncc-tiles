@@ -83,7 +83,7 @@ class OrderItemResponse(BaseModel):
 
 class OrderResponse(BaseModel):
     id: int
-    user_id: int
+    user_id: Optional[int] = None
     total_amount: float
     status: str
     created_at: datetime

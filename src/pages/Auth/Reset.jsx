@@ -75,6 +75,9 @@ const Reset = () => {
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
               />
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Must be at least 8 chars, include uppercase, lowercase, number & special char.
+            </p>
           </div>
           <button
             type="submit"

@@ -38,7 +38,6 @@ export const CartProvider = ({ children }) => {
     } else {
       setCart([...cart, { ...product, size, color, quantity: qty, key }]);
     }
-    setIsOpen(true);
   };
 
   const removeFromCart = (key) => {

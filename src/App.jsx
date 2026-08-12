@@ -100,7 +100,7 @@ function App() {
       {/* Floating Buttons */}
       <div className="fixed bottom-6 right-0 flex flex-col gap-4 items-end z-40 overflow-hidden pb-4 pt-4 pointer-events-none">
         <a
-          href="https://www.tiktok.com/@karabo0941?is_from_webapp=1&sender_device=pc"
+          href="https://www.tiktok.com/@ncctilessupplier"
           target="_blank"
           rel="noopener noreferrer"
           className="pointer-events-auto bg-black text-white pl-4 pr-6 py-3 rounded-l-full shadow-2xl hover:bg-gray-800 transition-transform duration-300 flex items-center justify-start gap-4 cursor-pointer font-semibold translate-x-[calc(100%-3.8rem)] hover:translate-x-0"

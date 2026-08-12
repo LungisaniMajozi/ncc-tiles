@@ -206,6 +206,10 @@ const CartSidebar = () => {
                   <div className="text-center p-3 bg-red-50 text-red-600 rounded-xl font-medium border border-red-200">
                     Admins cannot place orders
                   </div>
+                ) : total < 500 ? (
+                  <div className="text-center p-3 bg-orange-50 text-orange-600 rounded-xl font-medium border border-orange-200">
+                    Minimum order amount is R500
+                  </div>
                 ) : (
                   <button
                     onClick={handleCheckout}

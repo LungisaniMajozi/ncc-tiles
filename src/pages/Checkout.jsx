@@ -288,6 +288,34 @@ const Checkout = () => {
     );
   }
 
+  // 💰 Minimum Order Amount Check
+  if (total < 500 && !orderComplete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center py-12 px-4">
+        <div className="text-center bg-white p-8 rounded-xl shadow-lg border border-orange-100 max-w-md w-full">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <DollarSign size={32} className="text-orange-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Minimum Order: R500
+          </h2>
+          <p className="text-gray-600 mb-6 font-medium">
+            Your current cart total is <span className="text-orange-600 font-bold">{formatPrice(total)}</span>.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Please add more items to your cart to proceed with checkout.
+          </p>
+          <button
+            onClick={() => navigate("/products")}
+            className="w-full bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-colors"
+          >
+            Continue Shopping
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ✅ Success Page
   if (orderComplete && window.orderDataForSuccessPage) {
     const od = window.orderDataForSuccessPage;
